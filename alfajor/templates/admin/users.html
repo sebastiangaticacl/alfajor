@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Usuarios · ALFAJOR · Cosas Ricas{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Usuarios</h1>
+<p class="text-secondary">Gestión de usuarios (ADMIN).</p>
+
+<a href="{{ url_for('admin.user_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo usuario</a>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Empleado</th>
+        <th>Activo</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td><span class="badge badge-info">{{ u.role }}</span></td>
+        <td>{{ u.employee.full_name if u.employee else '—' }}</td>
+        <td>{{ 'Sí' if u.active else 'No' }}</td>
+        <td>
+          <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="btn btn-secondary btn-sm">Editar</a>
+          {% if u.id != current_user.id %}
+          <form action="{{ url_for('admin.user_delete', id=u.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar usuario?');">
+            <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

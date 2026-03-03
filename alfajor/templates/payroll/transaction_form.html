@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Registrar pago · ALFAJOR{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Registrar pago</h1>
+<div class="card">
+  <form method="post">
+    <div class="form-group">
+      <label>Empleado</label>
+      <select name="employee_id" class="form-input" required>
+        <option value="">—</option>
+        {% for e in employees %}
+        <option value="{{ e.id }}">{{ e.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Periodo</label>
+      <select name="pay_period_id" class="form-input" required>
+        <option value="">—</option>
+        {% for p in periods %}
+        <option value="{{ p.id }}">{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Monto</label>
+      <input type="number" name="amount" step="0.01" class="form-input" required>
+    </div>
+    <div class="form-group">
+      <label>Método</label>
+      <select name="method" class="form-input">
+        <option value="TRANSFER">Transferencia</option>
+        <option value="CASH">Efectivo</option>
+        <option value="CHECK">Cheque</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Referencia</label>
+      <input type="text" name="reference" class="form-input" placeholder="Nº operación">
+    </div>
+    <div class="form-group">
+      <label>Fecha pago</label>
+      <input type="date" name="payment_date" class="form-input" required>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Registrar</button>
+      <a href="{{ url_for('payroll.periods') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+<style>.form-group { margin-bottom: var(--space-4); } .form-actions { margin-top: var(--space-4); display: flex; gap: var(--space-2); }</style>
+{% endblock %}

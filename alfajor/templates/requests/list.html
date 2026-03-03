@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes · ALFAJOR · Cosas Ricas{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Solicitudes</h1>
+<p class="text-secondary">Cambios de turno, días libres, swaps.</p>
+
+{% if current_user.employee_id %}
+<a href="{{ url_for('requests.new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nueva solicitud</a>
+{% endif %}
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Empleado</th>
+        <th>Tipo</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Comentario</th>
+        {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
+        <th></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+      <tr>
+        <td>{{ r.employee.full_name }}</td>
+        <td>{{ r.request_type or '—' }}</td>
+        <td>{{ r.requested_date.strftime('%d/%m/%Y') if r.requested_date else '—' }}</td>
+        <td><span class="badge badge-{{ 'info' if r.status == 'PENDIENTE' else 'success' if r.status == 'APROBADO' else 'danger' }}">{{ r.status }}</span></td>
+        <td>{{ r.review_comment or '—' }}</td>
+        {% if current_user.role in ['ADMIN', 'ENCARGADO'] and r.status == 'PENDIENTE' %}
+        <td>
+          <form action="{{ url_for('requests.approve', id=r.id) }}" method="post" style="display:inline;">
+            <input type="hidden" name="comment" value="">
+            <button type="submit" class="btn btn-secondary btn-sm">Aprobar</button>
+          </form>
+          <form action="{{ url_for('requests.reject', id=r.id) }}" method="post" style="display:inline;">
+            <input type="hidden" name="comment" value="">
+            <button type="submit" class="btn btn-secondary btn-sm text-danger">Rechazar</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted">Sin solicitudes.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

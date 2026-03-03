@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Turnos · ALFAJOR · Cosas Ricas{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Turnos</h1>
+
+<div class="calendar-toolbar">
+  <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary">← Anterior</a>
+  <span class="calendar-range">{{ monday.strftime('%d/%m') }} – {{ sunday.strftime('%d/%m/%Y') }}</span>
+  <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary">Siguiente →</a>
+</div>
+
+{% if week %}
+<div class="week-status badge badge-{{ 'info' if week.status == 'BORRADOR' else 'success' if week.status == 'PUBLICADA' else 'warning' }}">{{ week.status }}</div>
+{% if week.status == 'BORRADOR' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+<form action="{{ url_for('shifts.week_publish', id=week.id) }}" method="post" style="display:inline;">
+  <button type="submit" class="btn btn-primary btn-sm">Publicar semana</button>
+</form>
+{% endif %}
+{% if week.status == 'PUBLICADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+<form action="{{ url_for('shifts.week_close', id=week.id) }}" method="post" style="display:inline;">
+  <button type="submit" class="btn btn-secondary btn-sm">Cerrar semana</button>
+</form>
+{% endif %}
+{% endif %}
+
+{% if not week and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+<form action="{{ url_for('shifts.week_new') }}" method="post" style="margin: var(--space-4) 0;">
+  <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
+  <button type="submit" class="btn btn-primary">Crear semana</button>
+</form>
+{% endif %}
+
+{% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+<div class="card" style="margin-top: var(--space-4);">
+  <div class="card-header">Nuevo turno</div>
+  <form action="{{ url_for('shifts.shift_new') }}" method="post" class="shift-form">
+    <input type="hidden" name="week_id" value="{{ week.id }}">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" name="date" class="form-input" value="{{ monday.isoformat() }}" min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
+      </div>
+      <div class="form-group">
+        <label>Empleado</label>
+        <select name="employee_id" class="form-input" required>
+          <option value="">—</option>
+          {% for e in employees %}
+          <option value="{{ e.id }}">{{ e.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Rol</label>
+        <select name="shift_role" class="form-input">
+          <option value="caja">Caja</option>
+          <option value="barra">Barra</option>
+          <option value="cocina">Cocina</option>
+          <option value="runner">Runner</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Inicio</label>
+        <input type="time" name="start_time" class="form-input" value="09:00">
+      </div>
+      <div class="form-group">
+        <label>Fin</label>
+        <input type="time" name="end_time" class="form-input" value="17:00">
+      </div>
+      <div class="form-group" style="align-self: flex-end;">
+        <button type="submit" class="btn btn-primary">Agregar</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: var(--space-4);">
+  <div class="card-header">Turnos de la semana</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Empleado</th>
+        <th>Rol</th>
+        <th>Horario</th>
+        <th>Estado</th>
+        {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+        <th></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in shifts %}
+      <tr>
+        <td>{{ s.date.strftime('%d/%m') }}</td>
+        <td>{{ s.employee.full_name }}</td>
+        <td>{{ s.shift_role }}</td>
+        <td>{{ s.start_time.strftime('%H:%M') }} – {{ s.end_time.strftime('%H:%M') }}</td>
+        <td><span class="badge badge-info">{{ s.status }}</span></td>
+        {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+        <td>
+          <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar turno?');">
+            <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-muted">Sin turnos esta semana.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+.calendar-toolbar { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.calendar-range { font-weight: var(--font-semibold); }
+.week-status { margin-right: var(--space-2); }
+.shift-form .form-row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; }
+.form-group { margin-bottom: 0; }
+</style>
+{% endblock %}

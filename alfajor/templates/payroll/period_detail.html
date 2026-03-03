@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ period.name }} · ALFAJOR{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ period.name }}</h1>
+<p class="text-secondary">{{ period.start_date.strftime('%d/%m') }} – {{ period.end_date.strftime('%d/%m/%Y') }} · {{ period.status }}
+  <a href="{{ url_for('reports.payroll_csv', period_id=period.id) }}" class="btn btn-secondary btn-sm">Exportar CSV</a>
+</p>
+
+{% if period.status == 'ABIERTO' and current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
+<form action="{{ url_for('payroll.period_generate', id=period.id) }}" method="post" style="margin-bottom: var(--space-4);">
+  <button type="submit" class="btn btn-primary">Generar liquidaciones</button>
+</form>
+{% endif %}
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Empleado</th>
+        <th>Total calculado</th>
+        <th>Estado conciliación</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for st in statements %}
+      <tr>
+        <td>{{ st.employee.full_name }}</td>
+        <td>${{ "%.2f"|format(st.total_calculated) }}</td>
+        <td><span class="badge badge-{{ 'info' if st.reconciliation_status == 'PENDIENTE' else 'success' if st.reconciliation_status == 'PAGADO' else 'warning' }}">{{ st.reconciliation_status }}</span></td>
+        <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-muted">Sin liquidaciones. Generar primero.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

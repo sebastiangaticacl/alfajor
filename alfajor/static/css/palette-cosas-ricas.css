@@ -1,0 +1,27 @@
+/**
+ * ALFAJOR - Paleta Cosas Ricas
+ * Extraída de identidad visual (Viernes de Match, logo)
+ * Desarrollado por Seba Gatica · 2026
+ */
+
+:root {
+  /* === Brand Cosas Ricas === */
+  --color-brand-red: #E04E4A;        /* Coral rojo principal */
+  --color-brand-red-dark: #C94542;   /* Rojo oscuro (hover) */
+  --color-brand-red-light: #E86A66;  /* Rojo claro */
+  --color-brand-red-muted: rgba(224, 78, 74, 0.15);
+
+  --color-brand-cream: #F8F0E3;     /* Beige cálido (fondo) */
+  --color-brand-cream-light: #FDF8F3; /* Crema muy clara */
+  --color-brand-cream-dark: #EDE4D5;  /* Beige oscuro */
+
+  --color-brand-white: #FFFFFF;     /* Blanco puro */
+
+  /* Para uso en design-system */
+  --color-brand-red-muted: rgba(224, 78, 74, 0.15);
+
+  /* Variaciones para contraste */
+  --color-brand-red-90: rgba(224, 78, 74, 0.9);
+  --color-brand-red-50: rgba(224, 78, 74, 0.5);
+  --color-brand-red-20: rgba(224, 78, 74, 0.2);
+}

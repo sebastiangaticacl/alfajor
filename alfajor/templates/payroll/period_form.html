@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Nuevo periodo · ALFAJOR{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Nuevo periodo de pago</h1>
+<div class="card">
+  <form method="post">
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" name="name" class="form-input" placeholder="Ej: Semana 1-7 Mar 2026">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Inicio</label>
+        <input type="date" name="start_date" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label>Fin</label>
+        <input type="date" name="end_date" class="form-input" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Tipo</label>
+      <select name="period_type" class="form-input">
+        <option value="SEMANAL">Semanal</option>
+        <option value="QUINCENAL">Quincenal</option>
+        <option value="MENSUAL">Mensual</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Crear</button>
+      <a href="{{ url_for('payroll.periods') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+<style>.form-group { margin-bottom: var(--space-4); } .form-row { display: flex; gap: var(--space-4); } .form-actions { margin-top: var(--space-4); display: flex; gap: var(--space-2); }</style>
+{% endblock %}

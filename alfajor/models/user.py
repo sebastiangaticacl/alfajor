@@ -1,0 +1,28 @@
+"""User."""
+
+import uuid
+from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from alfajor.extensions import db
+from alfajor.enums import UserRole
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default=UserRole.TRABAJADOR.value)
+    employee_id = db.Column(db.String(36), db.ForeignKey("employees.id"))
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    employee = db.relationship("Employee", backref="user", uselist=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Configuración · ALFAJOR · Cosas Ricas{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Configuración</h1>
+<p class="text-secondary">Horarios, reglas, roles, sucursales.</p>
+
+<div class="config-grid">
+  <div class="card">
+    <div class="card-header">Configuración JSON</div>
+    <table class="table">
+      {% for key, s in settings.items() %}
+      <tr>
+        <td><code>{{ key }}</code></td>
+        <td>
+          <form action="{{ url_for('settings.update_setting', key=key) }}" method="post" class="inline-form">
+            <input type="text" name="value" value="{{ s.value|json_dumps }}" class="form-input form-input-sm">
+            <button type="submit" class="btn btn-secondary btn-sm">Guardar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% if not settings %}
+    <p class="text-muted">Sin configuración. Ejecuta el seed.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">Sucursales</div>
+    <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary btn-sm" style="margin-bottom: var(--space-2);">Nueva sucursal</a>
+    <table class="table">
+      <thead>
+        <tr><th>Nombre</th><th>Código</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for b in branches %}
+        <tr>
+          <td>{{ b.name }}</td>
+          <td>{{ b.code or '—' }}</td>
+          <td><a href="{{ url_for('settings.branch_edit', id=b.id) }}" class="btn btn-secondary btn-sm">Editar</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+@media (max-width: 768px) { .config-grid { grid-template-columns: 1fr; } }
+.inline-form { display: flex; gap: var(--space-2); align-items: center; }
+.form-input-sm { max-width: 200px; }
+</style>
+{% endblock %}

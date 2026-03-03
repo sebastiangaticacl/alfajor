@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.full_name }} · ALFAJOR{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ employee.full_name }}</h1>
+<div class="card">
+  <p><strong>Email:</strong> {{ employee.email or '—' }}</p>
+  <p><strong>Teléfono:</strong> {{ employee.phone or '—' }}</p>
+  <p><strong>Rol base:</strong> {{ employee.base_role or '—' }}</p>
+  <p><strong>Valor hora:</strong> ${{ "%.2f"|format(employee.hourly_rate) }}</p>
+  <p><strong>Estado:</strong> <span class="badge badge-{{ 'success' if employee.status == 'ACTIVO' else 'warning' }}">{{ employee.status }}</span></p>
+  <p><strong>Sucursal:</strong> {{ employee.branch.name if employee.branch else '—' }}</p>
+  {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
+  <div style="margin-top: var(--space-4);">
+    <a href="{{ url_for('employees.edit', id=employee.id) }}" class="btn btn-primary">Editar</a>
+    <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Volver</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

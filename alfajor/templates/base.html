@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ALFAJOR · Cosas Ricas{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="app-layout">
+    {% block topbar %}
+    {% include "components/topbar.html" %}
+    {% endblock %}
+
+    <div class="app-body">
+      {% if show_sidebar|default(true) %}
+      {% block sidebar %}
+      {% include "components/sidebar.html" %}
+      {% endblock %}
+      {% endif %}
+
+      <main class="app-main" role="main">
+        {% include "components/alerts.html" %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    {% block footer %}
+    {% include "components/footer.html" %}
+    {% endblock %}
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

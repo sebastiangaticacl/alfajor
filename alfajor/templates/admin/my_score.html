@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Mi score · ALFAJOR{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Mi score</h1>
+{% if data %}
+<div class="card">
+  <p><strong>Score:</strong> {{ "%.1f"|format(data.score) }}/100</p>
+  <p>Turnos completados: {{ data.shifts_completed }}</p>
+  <p>Minutos de atraso: {{ data.late_minutes }}</p>
+  <p>Ausencias: {{ data.absences }}</p>
+  <p>Incidencias: {{ data.incidents }}</p>
+</div>
+{% else %}
+<p class="text-muted">No vinculado a empleado o sin datos.</p>
+{% endif %}
+{% endblock %}

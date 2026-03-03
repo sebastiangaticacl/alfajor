@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Personas · ALFAJOR · Cosas Ricas{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Personas</h1>
+<p class="text-secondary">Empleados y disponibilidad.</p>
+
+{% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
+<a href="{{ url_for('employees.new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo empleado</a>
+{% endif %}
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Rol</th>
+        <th>Valor hora</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in employees %}
+      <tr>
+        <td><a href="{{ url_for('employees.detail', id=e.id) }}">{{ e.full_name }}</a></td>
+        <td>{{ e.base_role or '—' }}</td>
+        <td>${{ "%.2f"|format(e.hourly_rate) }}</td>
+        <td><span class="badge badge-{{ 'success' if e.status == 'ACTIVO' else 'warning' }}">{{ e.status }}</span></td>
+        <td>
+          <a href="{{ url_for('employees.detail', id=e.id) }}" class="btn btn-secondary btn-sm">Ver</a>
+          {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
+          <a href="{{ url_for('employees.edit', id=e.id) }}" class="btn btn-secondary btn-sm">Editar</a>
+          <form action="{{ url_for('employees.delete', id=e.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar empleado?');">
+            <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
