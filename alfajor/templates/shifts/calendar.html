@@ -5,10 +5,26 @@
 <h1 class="page-title">Turnos</h1>
 <p class="page-subtitle">Planificación semanal por empleado.</p>
 
-<div class="calendar-toolbar">
-  <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary">← Anterior</a>
-  <span class="calendar-range">{{ monday.strftime('%d/%m') }} – {{ sunday.strftime('%d/%m/%Y') }}</span>
-  <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary">Siguiente →</a>
+<div class="filter-bar sticky">
+  <div class="filter-left">
+    <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary btn-sm">← Anterior</a>
+    <span class="calendar-range">{{ monday.strftime('%d/%m') }} – {{ sunday.strftime('%d/%m/%Y') }}</span>
+    <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary btn-sm">Siguiente →</a>
+  </div>
+  <div class="filter-right">
+    <select class="select" disabled title="Próximamente">
+      <option>Sucursal</option>
+      {% for b in branches %}
+      <option>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+    <select class="select" disabled title="Próximamente">
+      <option>Rol</option>
+      {% for role in shift_roles %}
+      <option>{{ role|capitalize }}</option>
+      {% endfor %}
+    </select>
+  </div>
 </div>
 <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
 
@@ -87,6 +103,49 @@
 </div>
 {% endif %}
 
+<div class="card">
+  <div class="stack">
+    <h3>Turnos de la semana</h3>
+    <span class="text-secondary">Vista rápida antes del tablero.</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Inicio–Fin</th>
+          <th>Empleado</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+          <th>Acciones</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in shifts %}
+        <tr>
+          <td>{{ s.date.strftime('%d/%m') }}</td>
+          <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
+          <td>{{ s.employee.full_name }}</td>
+          <td>{{ s.shift_role }}</td>
+          <td><span class="badge badge-info">{{ s.status }}</span></td>
+          {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+          <td>
+            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar turno?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-secondary">Sin turnos esta semana.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 <div class="schedule-layout">
   <div class="card schedule-card">
     <div class="schedule-header">
