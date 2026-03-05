@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Configuración · ALFAJOR · Cosas Ricas{% endblock %}
 
+{% block page_title %}
+<h1 class="topbar-heading">Configuración</h1>
+{% endblock %}
+{% block page_subtitle %}Preferencias del sistema y administración{% endblock %}
+
 {% block content %}
-<div class="config-container">
-  <div class="flex-between">
-    <div>
-      <h1 class="page-title">Configuración</h1>
-      <p class="page-subtitle">Gestiona las reglas de negocio y sucursales.</p>
+<section class="stack config-container">
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Configuración</h2>
+      <p class="small muted">Preferencias del sistema, usuarios y sucursales.</p>
     </div>
-    <div id="ajax-toast" role="status" aria-live="polite" aria-atomic="true">
+    <div id="ajax-toast" class="small muted" role="status" aria-live="polite" aria-atomic="true">
       <span id="toast-icon"></span>
       <span id="toast-message"></span>
     </div>
@@ -139,7 +144,7 @@
   <div class="tab-pane" id="tab-branches" role="tabpanel">
     <div class="card glass-card">
       <div class="flex-between mb-4">
-        <div class="card-header" style="margin-bottom:0">Sucursales Activas</div>
+        <div class="card-header card-header--no-margin">Sucursales Activas</div>
         <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary btn-sm">Nueva sucursal</a>
       </div>
       <div class="table-responsive">
@@ -173,7 +178,7 @@
       </div>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}

@@ -1,57 +1,110 @@
 {% extends "base.html" %}
 {% block title %}Pagos · ALFAJOR · Cosas Ricas{% endblock %}
 
+{% block page_title %}
+<h1 class="topbar-heading">Pagos</h1>
+{% endblock %}
+{% block page_subtitle %}Control y conciliación de pagos del equipo{% endblock %}
+
 {% block content %}
-<h1 class="page-title">Periodos de pago</h1>
-<p class="text-secondary">Liquidaciones y conciliación.</p>
-
-<a href="{{ url_for('payroll.period_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo
-  periodo</a>
-<a href="{{ url_for('payroll.transaction_new') }}" class="btn btn-secondary"
-  style="margin-bottom: var(--space-4);">Registrar pago</a>
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Rango</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in periods %}
-        <tr>
-          <td>{{ p.name }}</td>
-          <td>{{ p.start_date|date_esp('%d/%m') }} – {{ p.end_date|date_esp('%d/%m/%Y') }}</td>
-          <td><span
-              class="badge badge-{{ 'info' if p.status == 'ABIERTO' else 'success' if p.status == 'PAGADO' else 'warning' }}">{{
-              p.status }}</span></td>
-          <td><a href="{{ url_for('payroll.period_detail', id=p.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="4" class="text-secondary">Sin periodos.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<section class="stack">
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Pagos</h2>
+      <p class="small muted">Control y conciliación de pagos del equipo</p>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('payroll.period_new') }}" class="btn btn-primary">Nuevo periodo</a>
+      <a href="{{ url_for('payroll.transaction_new') }}" class="btn btn-secondary">Registrar pago</a>
+    </div>
   </div>
-</div>
 
-{% if total and total > per_page %}
-{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
-<div class="pagination">
-  {% if page > 1 %}
-  <a href="{{ url_for('payroll.periods', page=page-1, per_page=per_page) }}"
-    class="btn btn-secondary btn-sm">Anterior</a>
-  {% endif %}
-  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %} <a href="{{ url_for('payroll.periods', page=page+1, per_page=per_page) }}"
-    class="btn btn-secondary btn-sm">Siguiente</a>
+  {% set open_count = periods|selectattr('status', 'equalto', 'ABIERTO')|list|length %}
+  {% set review_count = periods|selectattr('status', 'equalto', 'EN_REVISION')|list|length %}
+  {% set closed_count = (periods|selectattr('status', 'equalto', 'PAGADO')|list|length) + (periods|selectattr('status', 'equalto', 'CERRADO')|list|length) + (periods|selectattr('status', 'equalto', 'APROBADO')|list|length) %}
+
+  <div class="grid grid-4">
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Total periodos</span>
+      <span class="kpi-card__value">{{ total|default(0) }}</span>
+      <span class="kpi-card__hint">En sistema</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Abiertos</span>
+      <span class="kpi-card__value">{{ open_count }}</span>
+      <span class="kpi-card__hint">En esta página</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">En revisión</span>
+      <span class="kpi-card__value">{{ review_count }}</span>
+      <span class="kpi-card__hint">En esta página</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Cerrados / Pagados</span>
+      <span class="kpi-card__value">{{ closed_count }}</span>
+      <span class="kpi-card__hint">En esta página</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Periodos de pago</div>
+    <div class="card-body">
+      {% if periods and periods|length > 0 %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Rango</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in periods %}
+            <tr>
+              <td>{{ p.name }}</td>
+              <td>{{ p.start_date|date_esp('%d/%m') }} – {{ p.end_date|date_esp('%d/%m/%Y') }}</td>
+              <td>
+                {% if p.status == 'PAGADO' or p.status == 'CERRADO' or p.status == 'APROBADO' %}
+                <span class="badge success">{{ p.status }}</span>
+                {% elif p.status == 'EN_REVISION' %}
+                <span class="badge warning">{{ p.status }}</span>
+                {% elif p.status == 'ABIERTO' %}
+                <span class="badge neutral">{{ p.status }}</span>
+                {% else %}
+                <span class="badge neutral">{{ p.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('payroll.period_detail', id=p.id) }}" class="btn btn-secondary btn-sm">Ver</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state__title">No hay pagos en este período</h3>
+        <p class="small muted empty-state__text">Cuando generes una semana de turnos, los pagos aparecerán aquí.</p>
+        <a href="{{ url_for('payroll.period_new') }}" class="btn btn-primary">Nuevo periodo</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if total and total > per_page %}
+  {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+  <div class="toolbar pagination-bar">
+    {% if page > 1 %}
+    <a href="{{ url_for('payroll.periods', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
     {% endif %}
-</div>
-{% endif %}
+    <span class="small muted">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('payroll.periods', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
 {% endblock %}

@@ -6,97 +6,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('alfajor-theme') || 'dark');</script>
   <title>{% block title %}ALFAJOR · Cosas Ricas{% endblock %}</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
-  </script>
-  <!-- HTMX -->
-  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   {% block head %}{% endblock %}
 </head>
 
-<body class="{% block body_class %}{% endblock %}">
+<body class="app {% block body_class %}{% endblock %}">
   <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <div class="layout">
-    {% if show_sidebar|default(true) %}
-    {% block sidebar %}
-    {% include "components/sidebar.html" %}
-    {% endblock %}
-    {% endif %}
-
-    <div class="content">
-      {% block topbar %}
-      <header class="topbar">
-        <button type="button" class="sidebar-toggle" aria-label="Abrir menu">☰</button>
-        <div class="topbar-title">
-          <h1 class="topbar-heading">{% block topbar_title %}{{ self.title()|striptags }}{% endblock %}</h1>
-          <div class="breadcrumbs">{% block breadcrumbs %}{% endblock %}</div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-title">ALFAJOR</div>
+          <div class="brand-subtitle">Café Cosas Ricas</div>
         </div>
-        <div class="topbar-user flex items-center gap-4">
-          <button id="theme-toggle"
-            class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Cambiar tema">
-            <span class="dark:hidden">🌙</span>
-            <span class="hidden dark:inline">☀️</span>
-          </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        {% set current = request.endpoint or '' %}
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-link{% if current == 'admin.dashboard' %} active{% endif %}"{% if current == 'admin.dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+        {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
+        <a href="{{ url_for('shifts.calendar') }}" class="nav-link{% if current and current.startswith('shifts.') %} active{% endif %}"{% if current and current.startswith('shifts.') %} aria-current="page"{% endif %}>Turnos</a>
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+        <a href="{{ url_for('employees.list') }}" class="nav-link{% if current and current.startswith('employees.') %} active{% endif %}"{% if current and current.startswith('employees.') %} aria-current="page"{% endif %}>Personas</a>
+        {% elif current_user.is_authenticated and current_user.role == 'TRABAJADOR' and current_user.employee %}
+        <a href="{{ url_for('employees.list') }}" class="nav-link{% if current and current.startswith('employees.') %} active{% endif %}"{% if current and current.startswith('employees.') %} aria-current="page"{% endif %}>Mi perfil</a>
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
+        <a href="{{ url_for('requests.list') }}" class="nav-link{% if current and current.startswith('requests.') %} active{% endif %}"{% if current and current.startswith('requests.') %} aria-current="page"{% endif %}>Solicitudes</a>
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
+        <a href="{{ url_for('payroll.periods') }}" class="nav-link{% if current and current.startswith('payroll.') %} active{% endif %}"{% if current and current.startswith('payroll.') %} aria-current="page"{% endif %}>Pagos</a>
+        {% elif current_user.is_authenticated and current_user.role == 'TRABAJADOR' %}
+        <a href="{{ url_for('payroll.my_statements') }}" class="nav-link{% if current and current.startswith('payroll.') %} active{% endif %}"{% if current and current.startswith('payroll.') %} aria-current="page"{% endif %}>Pagos</a>
+        {% endif %}
+        {% if current_user.is_authenticated %}
+          {% if current_user.role == 'TRABAJADOR' %}
+        <a href="{{ url_for('ranking.my_score') }}" class="nav-link{% if current and current.startswith('ranking.') %} active{% endif %}"{% if current and current.startswith('ranking.') %} aria-current="page"{% endif %}>Mi score</a>
+          {% else %}
+        <a href="{{ url_for('ranking.index') }}" class="nav-link{% if current and current.startswith('ranking.') %} active{% endif %}"{% if current and current.startswith('ranking.') %} aria-current="page"{% endif %}>Ranking</a>
+          {% endif %}
+        {% endif %}
+        {% if current_user.is_authenticated and current_user.role == 'ADMIN' %}
+        <div class="sidebar-nav-divider"></div>
+        <a href="{{ url_for('admin.users') }}" class="nav-link{% if current and (current.startswith('admin.user') or current == 'admin.users') %} active{% endif %}"{% if current and (current.startswith('admin.user') or current == 'admin.users') %} aria-current="page"{% endif %}>Usuarios</a>
+        <a href="{{ url_for('settings.index') }}" class="nav-link{% if current and current.startswith('settings.') %} active{% endif %}"{% if current and current.startswith('settings.') %} aria-current="page"{% endif %}>Configuración</a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer small muted">
+        Desarrollado por Seba Gatica · 2026
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="btn btn-ghost sidebar-toggle" id="sidebarToggle" type="button" aria-label="Abrir menú">☰</button>
+
+        <div class="topbar-title">
+          {% block page_title %}
+          <h1 class="topbar-heading">{{ self.title()|striptags }}</h1>
+          {% endblock %}
+          <div class="small muted">{% block page_subtitle %}{% block breadcrumbs %}{% endblock %}{% endblock %}</div>
+        </div>
+
+        <div class="topbar-user">
           {% if current_user.is_authenticated %}
-          <span class="user-email text-sm text-slate-600 dark:text-slate-400">{{ current_user.email }}</span>
-          <form action="{{ url_for('auth.logout') }}" method="post" class="m-0">
+          <span class="small muted">{{ current_user.email }}</span>
+          <form action="{{ url_for('auth.logout') }}" method="post" class="toolbar-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
-              class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-3 py-1.5 rounded-lg text-sm transition-colors">Salir</button>
+            <button type="submit" class="btn btn-secondary btn-sm">Salir</button>
           </form>
+          {% else %}
+          <span class="small muted">Sesión activa</span>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">Entrar</a>
           {% endif %}
         </div>
       </header>
-      {% endblock %}
 
-      <main id="main-content" class="content-inner">
-        {% include "components/alerts.html" %}
-        {% block content %}{% endblock %}
-        <footer class="footer">
-          <div class="divider"></div>
-          <p>Desarrollado por Seba Gatica · 2026</p>
-        </footer>
+      <main id="main-content" class="content">
+        <div class="content-inner">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          <div class="stack content-alerts">
+            {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% endwith %}
+
+          {% block content %}{% endblock %}
+        </div>
+      </main>
     </div>
   </div>
-  </div>
 
-  <script>
-      (function () {
-        var toggle = document.querySelector('.sidebar-toggle');
-        var layout = document.querySelector('.layout');
-        if (toggle && layout) {
-          toggle.addEventListener('click', function () {
-            document.body.classList.toggle('sidebar-open');
-          });
-        }
-
-        var themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-          themeToggle.addEventListener('click', function () {
-            var current = document.documentElement.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('alfajor-theme', next);
-            if (next === 'dark') {
-              document.documentElement.classList.add('dark');
-            } else {
-              document.documentElement.classList.remove('dark');
-            }
-          });
-        }
-        if (localStorage.getItem('alfajor-theme') === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
-        lucide.createIcons();
-      })();
-  </script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 

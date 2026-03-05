@@ -1,92 +1,142 @@
 {% extends "base.html" %}
 {% block title %}Ranking · ALFAJOR · Cosas Ricas{% endblock %}
 
+{% block page_title %}
+<h1 class="topbar-heading">Ranking</h1>
+{% endblock %}
+{% block page_subtitle %}Rendimiento y desempeño del equipo{% endblock %}
+
 {% block content %}
-<div class="stack">
-  <div class="flex-between">
-    <div class="stack">
-      <h1 class="page-title">Ranking de Desempeño</h1>
-      <p class="text-secondary">Rendimiento y cumplimiento por periodo seleccionado.</p>
+{% set total_score = results|sum(attribute='score') if results else 0 %}
+{% set avg_score = (total_score / results|length)|round(1) if results and results|length > 0 else none %}
+{% set total_absences = results|sum(attribute='absences') if results else 0 %}
+{% set total_late = results|sum(attribute='late_minutes') if results else 0 %}
+{% set avg_late = (total_late / results|length)|round(0) if results and results|length > 0 else none %}
+
+<section class="stack">
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Ranking</h2>
+      <p class="small muted">Rendimiento y desempeño del equipo</p>
     </div>
-    <a href="{{ url_for('reports.ranking_csv', start=period_start.isoformat(), end=period_end.isoformat(), preset=preset) }}"
-      class="btn btn-secondary">
-      <i data-lucide="download"></i> Exportar CSV
-    </a>
+    <div class="toolbar">
+      <a href="{{ url_for('reports.ranking_csv', start=period_start.isoformat(), end=period_end.isoformat(), preset=preset) }}" class="btn btn-secondary btn-sm">Exportar CSV</a>
+    </div>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Mejor empleado</span>
+      <span class="kpi-card__value kpi-card__value--text">{{ results[0].employee.full_name if results and results|length > 0 else '—' }}</span>
+      <span class="kpi-card__hint">{{ 'Score ' ~ "%.0f"|format(results[0].score) ~ '%' if results and results|length > 0 else 'Sin datos' }}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Promedio de desempeño</span>
+      <span class="kpi-card__value">{{ "%.0f"|format(avg_score) if avg_score is not none else '—' }}{% if avg_score is not none %}%{% endif %}</span>
+      <span class="kpi-card__hint">{{ 'En el periodo' if avg_score is not none else 'Sin datos' }}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Ausencias totales</span>
+      <span class="kpi-card__value">{{ total_absences }}</span>
+      <span class="kpi-card__hint">{{ 'En el equipo' if results else 'Sin datos' }}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Puntualidad promedio</span>
+      <span class="kpi-card__value">{{ (100 - avg_late)|round(0) if avg_late is not none else '—' }}{% if avg_late is not none %}%{% endif %}</span>
+      <span class="kpi-card__hint">{{ 'Aprox. (100 − atrasos)' if avg_late is not none else 'Sin datos' }}</span>
+    </div>
   </div>
 
   <div class="card">
-    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-      <div class="stack">
-        <label for="start" class="text-xs font-bold uppercase tracking-wider text-secondary">Desde</label>
+    <div class="card-header toolbar">
+      <span>Filtros</span>
+    </div>
+    <div class="card-body">
+      <form method="get" class="toolbar toolbar-group">
+        <label for="start" class="sr-only">Desde</label>
         <input type="date" id="start" name="start" class="input" value="{{ period_start.isoformat() }}">
-      </div>
-      <div class="stack">
-        <label for="end" class="text-xs font-bold uppercase tracking-wider text-secondary">Hasta</label>
+        <label for="end" class="sr-only">Hasta</label>
         <input type="date" id="end" name="end" class="input" value="{{ period_end.isoformat() }}">
-      </div>
-      <div class="stack">
-        <label for="preset" class="text-xs font-bold uppercase tracking-wider text-secondary">Preset de cálculo</label>
+        <label for="preset" class="sr-only">Preset</label>
         <select id="preset" name="preset" class="select">
-          <option value="BALANCEADO" {{ 'selected' if preset=='BALANCEADO' else '' }}>Balanceado</option>
-          <option value="PUNTUALIDAD" {{ 'selected' if preset=='PUNTUALIDAD' else '' }}>Puntualidad</option>
-          <option value="ESTABILIDAD" {{ 'selected' if preset=='ESTABILIDAD' else '' }}>Estabilidad</option>
+          <option value="BALANCEADO" {{ 'selected' if preset == 'BALANCEADO' else '' }}>Balanceado</option>
+          <option value="PUNTUALIDAD" {{ 'selected' if preset == 'PUNTUALIDAD' else '' }}>Puntualidad</option>
+          <option value="ESTABILIDAD" {{ 'selected' if preset == 'ESTABILIDAD' else '' }}>Estabilidad</option>
         </select>
-      </div>
-      <button type="submit" class="btn btn-primary w-full">Aplicar Filtros</button>
-    </form>
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+      </form>
+    </div>
   </div>
 
   <div class="card">
-    <div class="table-responsive">
-      <table class="table">
-        <thead>
-          <tr>
-            <th style="width: 60px;">Pos</th>
-            <th>Empleado</th>
-            <th style="width: 200px;">Score</th>
-            <th>Horas</th>
-            <th>Turnos</th>
-            <th>Atrasos (m)</th>
-            <th>Ausencias</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in results %}
-          <tr>
-            <td>
-              <div class="flex items-center justify-center font-bold">
-                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{
-                loop.index }}{% endif %}
-              </div>
-            </td>
-            <td>
-              <a href="{{ url_for('employees.detail', id=r.employee.id) }}" class="font-bold">{{ r.employee.full_name
-                }}</a>
-              <div class="text-xs text-secondary">{{ r.employee.branch.name if r.employee.branch else 'Sin sucursal' }}
-              </div>
-            </td>
-            <td>
-              <div class="stack gap-1">
-                <div class="score-bar">
-                  <div class="score-fill" style="width: {{ r.score }}%"></div>
+    <div class="card-header">Ranking de desempeño</div>
+    <div class="card-body">
+      {% if results and results|length > 0 %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Posición</th>
+              <th>Empleado</th>
+              <th>Score</th>
+              <th>Horas trabajadas</th>
+              <th>Atrasos</th>
+              <th>Ausencias</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in results %}
+            {% set score_val = r.score|float %}
+            {% set estado = 'EXCELENTE' if score_val >= 80 else ('BUENO' if score_val >= 60 else ('REGULAR' if score_val >= 40 else 'CRÍTICO')) %}
+            <tr>
+              <td>
+                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('employees.detail', id=r.employee.id) }}" class="table-cell-primary">{{ r.employee.full_name }}</a>
+                <div class="small muted">{{ r.employee.branch.name if r.employee.branch else 'Sin sucursal' }}</div>
+              </td>
+              <td>
+                <div class="score-bar-wrap">
+                  <div class="score-bar">
+                    <div class="score-fill score-pct-{{ (score_val)|round(0)|int }}"></div>
+                  </div>
+                  <span class="small">{{ "%.0f"|format(score_val) }}%</span>
                 </div>
-                <span class="text-xs font-bold">{{ "%.0f"|format(r.score) }}%</span>
-              </div>
-            </td>
-            <td>{{ "%.1f"|format(r.total_hours) }}</td>
-            <td>{{ r.shifts_completed }}</td>
-            <td class="{{'text-danger font-bold' if r.late_minutes > 15 else ''}}">{{ r.late_minutes }}</td>
-            <td class="{{'text-danger font-bold' if r.absences > 0 else ''}}">{{ r.absences }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="text-center p-8 text-secondary italic">No se encontraron datos para los filtros
-              seleccionados.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              </td>
+              <td>{{ "%.1f"|format(r.total_hours) }}</td>
+              <td><span class="{% if r.late_minutes > 15 %}text-danger{% endif %}">{{ r.late_minutes }}</span> min</td>
+              <td><span class="{% if r.absences > 0 %}text-danger{% endif %}">{{ r.absences }}</span></td>
+              <td>
+                {% if estado == 'EXCELENTE' %}
+                <span class="badge success">{{ estado }}</span>
+                {% elif estado == 'BUENO' %}
+                <span class="badge primary">{{ estado }}</span>
+                {% elif estado == 'REGULAR' %}
+                <span class="badge warning">{{ estado }}</span>
+                {% else %}
+                <span class="badge danger">{{ estado }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state__title">No hay datos de rendimiento aún</h3>
+        <p class="small muted empty-state__text">Cuando el sistema registre turnos y asistencia, el ranking aparecerá aquí.</p>
+      </div>
+      {% endif %}
     </div>
   </div>
-</div>
+</section>
+
+<style>
+  {% for i in range(101) %}
+  .score-pct-{{ i }} { width: {{ i }}%; }
+  {% endfor %}
+</style>
 {% endblock %}

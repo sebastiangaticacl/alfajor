@@ -1,157 +1,215 @@
 {% extends "base.html" %}
 {% block title %}Turnos · ALFAJOR · Cosas Ricas{% endblock %}
 
-{% block content %}
-<h1 class="page-title">Turnos</h1>
-<p class="page-subtitle">Planificación semanal por empleado.</p>
+{% block page_title %}
+<h1 class="topbar-heading">Turnos</h1>
+{% endblock %}
+{% block page_subtitle %}Planificación semanal{% endblock %}
 
-<div class="filter-bar sticky">
-  <div class="filter-left">
-    <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary btn-sm">← Anterior</a>
-    <span class="calendar-range">{{ monday|date_esp('%d/%m') }} – {{ sunday|date_esp('%d/%m/%Y') }}</span>
-    <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary btn-sm">Siguiente →</a>
-  </div>
-  <div class="filter-right">
-    <select class="select" disabled title="Próximamente">
-      <option>Sucursal</option>
-      {% for b in branches %}
-      <option>{{ b.name }}</option>
-      {% endfor %}
-    </select>
-    <select class="select" disabled title="Próximamente">
-      <option>Rol</option>
-      {% for role in shift_roles %}
-      <option>{{ role|capitalize }}</option>
-      {% endfor %}
-    </select>
-  </div>
-</div>
+{% block content %}
 <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
 
-{% if not week %}
-<div class="card schedule-card">
-  <p class="text-muted">Semana no creada (crear semana).</p>
-</div>
-{% endif %}
-
-{% if week %}
-<div
-  class="week-status badge badge-{{ 'info' if week.status == 'BORRADOR' else 'success' if week.status == 'PUBLICADA' else 'warning' }}">
-  {{ week.status }}</div>
-{% if week.status == 'BORRADOR' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-<form action="{{ url_for('shifts.week_publish', id=week.id) }}" method="post" style="display:inline;">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="btn btn-primary btn-sm">Publicar semana</button>
-</form>
-{% endif %}
-{% if week.status == 'PUBLICADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-<form action="{{ url_for('shifts.week_close', id=week.id) }}" method="post" style="display:inline;">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="btn btn-secondary btn-sm">Cerrar semana</button>
-</form>
-{% endif %}
-{% endif %}
-
-{% if not week and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-<form action="{{ url_for('shifts.week_new') }}" method="post" style="margin: var(--space-4) 0;">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
-  <button type="submit" class="btn btn-primary">Crear semana</button>
-</form>
-{% endif %}
-
-{% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-<div class="card" style="margin-top: var(--space-4);">
-  <div class="card-header">Nuevo turno</div>
-  <form action="{{ url_for('shifts.shift_new') }}" method="post" class="shift-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="week_id" value="{{ week.id }}">
-    <div class="form-row">
-      <div class="form-group">
-        <label for="shift_date">Fecha</label>
-        <input type="date" id="shift_date" name="date" class="form-input" value="{{ monday.isoformat() }}"
-          min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
-      </div>
-      <div class="form-group">
-        <label for="shift_employee">Empleado</label>
-        <select id="shift_employee" name="employee_id" class="form-input" required>
-          <option value="">—</option>
-          {% for e in employees %}
-          <option value="{{ e.id }}">{{ e.full_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="shift_role">Rol</label>
-        <select id="shift_role" name="shift_role" class="form-input">
-          <option value="caja">Caja</option>
-          <option value="barra">Barra</option>
-          <option value="cocina">Cocina</option>
-          <option value="runner">Runner</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="shift_start">Inicio</label>
-        <input type="time" id="shift_start" name="start_time" class="form-input" value="09:00">
-      </div>
-      <div class="form-group">
-        <label for="shift_end">Fin</label>
-        <input type="time" id="shift_end" name="end_time" class="form-input" value="17:00">
-      </div>
-      <div class="form-group" style="align-self: flex-end;">
-        <button type="submit" class="btn btn-primary">Agregar</button>
-      </div>
+<section class="stack">
+  <!-- Encabezado: título + acciones -->
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Turnos</h2>
+      <p class="small muted">Planificación semanal</p>
     </div>
-  </form>
-</div>
-{% endif %}
+    <div class="toolbar">
+      {% if not week and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+      <form action="{{ url_for('shifts.week_new') }}" method="post" class="form-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
+        <button type="submit" class="btn btn-primary">Crear semana</button>
+      </form>
+      {% endif %}
+      {% if week and week.status == 'BORRADOR' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+      <form action="{{ url_for('shifts.week_publish', id=week.id) }}" method="post" class="form-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-primary btn-sm">Publicar</button>
+      </form>
+      {% endif %}
+      {% if week and week.status != 'CERRADA' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+      <a href="#nuevo-turno" class="btn btn-secondary btn-sm">Agregar turno</a>
+      {% endif %}
+    </div>
+  </div>
 
-<div class="card">
-  <div class="stack">
-    <h3>Turnos de la semana</h3>
-    <span class="text-secondary">Vista rápida antes del tablero.</span>
-  </div>
-  <div class="table-responsive">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Inicio–Fin</th>
-          <th>Empleado</th>
-          <th>Rol</th>
-          <th>Estado</th>
-          {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-          <th>Acciones</th>
-          {% endif %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in shifts %}
-        <tr>
-          <td>{{ s.date|date_esp('%d/%m') }}</td>
-          <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
-          <td>{{ s.employee.full_name }}</td>
-          <td>{{ s.shift_role }}</td>
-          <td><span class="badge badge-info">{{ s.status }}</span></td>
-          {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-          <td>
-            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;"
-              onsubmit="return confirm('¿Eliminar turno?');">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
-            </form>
-          </td>
-          {% endif %}
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="text-secondary">Sin turnos esta semana.</td>
-        </tr>
+  <!-- Toolbar sticky: filtros / navegación semana -->
+  <div class="toolbar toolbar-sticky">
+    <div class="toolbar-group">
+      <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary btn-sm">← Anterior</a>
+      <span class="calendar-range">{{ monday|date_esp('%d/%m') }} – {{ sunday|date_esp('%d/%m/%Y') }}</span>
+      <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary btn-sm">Siguiente →</a>
+    </div>
+    <div class="toolbar-group">
+      <select class="select" disabled title="Próximamente">
+        <option>Sucursal</option>
+        {% for b in branches %}
+        <option>{{ b.name }}</option>
         {% endfor %}
-      </tbody>
-    </table>
+      </select>
+      <select class="select" disabled title="Próximamente">
+        <option>Rol</option>
+        {% for role in shift_roles %}
+        <option>{{ role|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
-</div>
+
+  {% if not week %}
+  <div class="card">
+    <div class="card-body">
+      <p class="small muted">Semana no creada. Crea una semana para planificar turnos.</p>
+      {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+      <form action="{{ url_for('shifts.week_new') }}" method="post" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
+        <button type="submit" class="btn btn-primary">Crear semana</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week %}
+  <div class="toolbar">
+    <span class="badge {% if week.status == 'BORRADOR' %}warning{% elif week.status == 'PUBLICADA' %}success{% else %}neutral{% endif %}">{{ week.status }}</span>
+    {% if week.status == 'PUBLICADA' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+    <form action="{{ url_for('shifts.week_close', id=week.id) }}" method="post" class="form-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-secondary btn-sm">Cerrar semana</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if week and week.status != 'CERRADA' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+  <div class="card" id="nuevo-turno">
+    <div class="card-header">Nuevo turno</div>
+    <div class="card-body">
+      <form action="{{ url_for('shifts.shift_new') }}" method="post" class="shift-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="week_id" value="{{ week.id }}">
+        <div class="form-row form-row--4">
+          <div class="form-group">
+            <label for="shift_date">Fecha</label>
+            <input type="date" id="shift_date" name="date" class="input" value="{{ monday.isoformat() }}"
+              min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
+          </div>
+          <div class="form-group">
+            <label for="shift_employee">Empleado</label>
+            <select id="shift_employee" name="employee_id" class="select" required>
+              <option value="">—</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="shift_role">Rol</label>
+            <select id="shift_role" name="shift_role" class="select">
+              <option value="caja">Caja</option>
+              <option value="barra">Barra</option>
+              <option value="cocina">Cocina</option>
+              <option value="runner">Runner</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="shift_start">Inicio</label>
+            <input type="time" id="shift_start" name="start_time" class="input" value="09:00">
+          </div>
+          <div class="form-group">
+            <label for="shift_end">Fin</label>
+            <input type="time" id="shift_end" name="end_time" class="input" value="17:00">
+          </div>
+          <div class="form-group form-group--actions">
+            <label class="form-label-invisible">&nbsp;</label>
+            <button type="submit" class="btn btn-primary">Agregar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tabla principal: turnos de la semana -->
+  <div class="card">
+    <div class="card-header">Turnos de la semana</div>
+    <div class="card-body">
+      {% if shifts and shifts|length > 0 %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Empleado</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              {% if week and week.status != 'CERRADA' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+              <th>Acciones</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in shifts %}
+            <tr>
+              <td>{{ s.date|date_esp('%d/%m') }}</td>
+              <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
+              <td>{{ s.employee.full_name }}</td>
+              <td>{{ s.shift_role }}</td>
+              <td>
+                {% if s.status == 'COMPLETADO' %}
+                <span class="badge success">{{ s.status }}</span>
+                {% elif s.status == 'CONFIRMADO' %}
+                <span class="badge neutral">{{ s.status }}</span>
+                {% elif s.status == 'PLANIFICADO' %}
+                <span class="badge neutral">{{ s.status }}</span>
+                {% elif s.status == 'AUSENTE' %}
+                <span class="badge danger">{{ s.status }}</span>
+                {% elif s.status == 'ANULADO' %}
+                <span class="badge warning">{{ s.status }}</span>
+                {% else %}
+                <span class="badge neutral">{{ s.status }}</span>
+                {% endif %}
+              </td>
+              {% if week and week.status != 'CERRADA' and current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+              <td>
+                <div class="toolbar toolbar--compact">
+                  <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="form-inline form-destructive" data-confirm="¿Eliminar turno?">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-ghost btn-sm">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state__title">No hay turnos en este rango</h3>
+        <p class="small muted empty-state__text">Crea una semana o agrega turnos para comenzar.</p>
+        {% if current_user.is_authenticated and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+          {% if not week %}
+          <form action="{{ url_for('shifts.week_new') }}" method="post" class="stack">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
+            <button type="submit" class="btn btn-primary">Crear semana</button>
+          </form>
+          {% else %}
+          <a href="#nuevo-turno" class="btn btn-primary">Agregar turno</a>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
 <div class="schedule-layout">
   <div class="card schedule-card">
     <div class="schedule-header">
@@ -215,9 +273,9 @@
             <span class="shift-role">{{ s.shift_role|capitalize }}</span>
             <span class="shift-time">{{ s.start_time|date_esp('%H:%M') }}–{{ s.end_time|date_esp('%H:%M') }}</span>
             {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="shift-delete">
+            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="shift-delete form-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" aria-label="Eliminar turno" title="Eliminar turno">×</button>
+              <button type="submit" class="btn btn-ghost btn-sm" aria-label="Eliminar turno" title="Eliminar turno">×</button>
             </form>
             {% endif %}
           </div>
@@ -347,6 +405,7 @@
   </div>
 </div>
 
+</section>
 {% block scripts %}
 <script>
   (function () {

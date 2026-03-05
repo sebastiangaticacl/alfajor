@@ -1,14 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Usuarios · ALFAJOR · Cosas Ricas{% endblock %}
 
+{% block page_title %}
+<h1 class="topbar-heading">Usuarios</h1>
+{% endblock %}
+{% block page_subtitle %}Gestión de usuarios y permisos{% endblock %}
+
 {% block content %}
-<h1 class="page-title">Usuarios</h1>
-<p class="text-secondary">Gestión de usuarios (ADMIN).</p>
+<section class="stack">
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Usuarios</h2>
+      <p class="small muted">Gestión de usuarios (ADMIN).</p>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('admin.user_new') }}" class="btn btn-primary">Nuevo usuario</a>
+    </div>
+  </div>
 
-<a href="{{ url_for('admin.user_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo usuario</a>
-
-<div class="card">
-  <div class="table-responsive">
+  <div class="card">
+    <div class="card-header">Usuarios</div>
+    <div class="card-body">
+      <div class="table-wrap">
     <table class="table">
     <thead>
       <tr>
@@ -23,13 +36,13 @@
       {% for u in users %}
       <tr>
         <td>{{ u.email }}</td>
-        <td><span class="badge badge-info">{{ u.role }}</span></td>
+        <td><span class="badge neutral">{{ u.role }}</span></td>
         <td>{{ u.employee.full_name if u.employee else '—' }}</td>
         <td>{{ 'Sí' if u.active else 'No' }}</td>
         <td>
           <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="btn btn-secondary btn-sm">Editar</a>
           {% if u.id != current_user.id %}
-          <form action="{{ url_for('admin.user_delete', id=u.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar usuario?');">
+          <form action="{{ url_for('admin.user_delete', id=u.id) }}" method="post" class="form-inline form-destructive" data-confirm="¿Eliminar usuario?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
           </form>
@@ -39,19 +52,21 @@
       {% endfor %}
     </tbody>
     </table>
+      </div>
+    </div>
   </div>
-</div>
 
-{% if total and total > per_page %}
-{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
-<div class="pagination">
-  {% if page > 1 %}
-  <a href="{{ url_for('admin.users', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  {% if total and total > per_page %}
+  {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+  <div class="toolbar pagination-bar">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin.users', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+    {% endif %}
+    <span class="small muted">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('admin.users', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+    {% endif %}
+  </div>
   {% endif %}
-  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %}
-  <a href="{{ url_for('admin.users', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
-  {% endif %}
-</div>
-{% endif %}
+</section>
 {% endblock %}

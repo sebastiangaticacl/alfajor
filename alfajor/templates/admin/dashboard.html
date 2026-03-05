@@ -1,117 +1,179 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · ALFAJOR · Cosas Ricas{% endblock %}
 
+{% block page_title %}
+<h1 class="topbar-heading">Dashboard</h1>
+{% endblock %}
+{% block page_subtitle %}Resumen operativo{% endblock %}
+
 {% block content %}
 {% set total_weeks = draft_weeks + published_weeks + closed_weeks %}
-{% set coverage = ((covered_today * 100) // total_today) if total_today > 0 else 0 %}
+{% set has_alerts = (pending_requests|default(0) > 0) or (periods|default([])|length > 0) or (draft_weeks|default(0) > 0) %}
 
-<div class="stack">
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="card kpi">
-      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos hoy</span>
-      <div class="kpi-value">{{ covered_today }} / {{ total_today }}</div>
+<section class="stack">
+  <!-- Encabezado de página: título + acciones -->
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Dashboard</h2>
+      <p class="small muted">Resumen operativo</p>
     </div>
-    <div class="card kpi">
-      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos semana</span>
-      <div class="kpi-value">{{ published_weeks + draft_weeks }}</div>
-    </div>
-    <div class="card kpi">
-      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Pagos pendientes</span>
-      <div class="kpi-value">{{ periods|length }}</div>
-    </div>
-    <div class="card kpi">
-      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Alertas</span>
-      <div class="kpi-value text-danger">{{ pending_requests }}</div>
+    <div class="toolbar">
+      <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
+      <a href="{{ url_for('payroll.period_new') }}" class="btn btn-secondary">Nuevo periodo</a>
+      <a href="{{ url_for('requests.list') }}" class="btn btn-secondary">Solicitudes</a>
+      <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Empleados</a>
     </div>
   </div>
 
-  <div class="card mb-8">
-    <div class="grid dashboard-actions">
-      <div class="stack">
-        <h2 class="text-xl font-extrabold tracking-tight">Acciones rápidas</h2>
-        <span class="text-secondary text-sm">Atajos para gestión diaria.</span>
-      </div>
-      <div class="stack">
+  <!-- KPI Cards (grid-4) -->
+  <div class="grid grid-4">
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Turnos hoy</span>
+      <span class="kpi-card__value">{{ covered_today|default(0) }} / {{ total_today|default(0) }}</span>
+      <span class="kpi-card__hint">{% if (total_today|default(0)) == 0 %}Sin datos{% else %}Cubiertos / total{% endif %}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Semana actual</span>
+      <span class="kpi-card__value">{{ (published_weeks|default(0)) + (draft_weeks|default(0)) }}</span>
+      <span class="kpi-card__hint">{% if (published_weeks|default(0)) + (draft_weeks|default(0)) == 0 %}Sin datos{% else %}Publicada + borrador{% endif %}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Pagos pendientes</span>
+      <span class="kpi-card__value">{{ periods|default([])|length }}</span>
+      <span class="kpi-card__hint">{% if (periods|default([])|length) == 0 %}Sin datos{% else %}Periodos abiertos{% endif %}</span>
+    </div>
+    <div class="card kpi-card">
+      <span class="kpi-card__label">Alertas activas</span>
+      <span class="kpi-card__value">{{ pending_requests|default(0) }}</span>
+      <span class="kpi-card__hint">{% if (pending_requests|default(0)) == 0 %}Sin datos{% else %}Solicitudes pendientes{% endif %}</span>
+    </div>
+  </div>
+
+  <!-- Acciones rápidas -->
+  <div class="card">
+    <div class="card-header">Acciones rápidas</div>
+    <div class="card-body">
+      <div class="toolbar">
         <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
         <a href="{{ url_for('payroll.period_new') }}" class="btn btn-secondary">Nuevo periodo</a>
-      </div>
-      <div class="stack">
         <a href="{{ url_for('requests.list') }}" class="btn btn-secondary">Solicitudes</a>
         <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Empleados</a>
       </div>
     </div>
   </div>
 
-  <div class="card mb-8">
-    <h3>Distribución de Turnos</h3>
-    <canvas id="shiftsChart" height="100"></canvas>
+  <!-- Gráfico (existente) -->
+  <div class="card">
+    <div class="card-header">Distribución de Turnos</div>
+    <div class="card-body">
+      <div class="chart-wrap">
+        <canvas id="shiftsChart" height="100"></canvas>
+      </div>
+    </div>
   </div>
 
-  <div class="grid dashboard-panels">
+  <!-- Tabla principal + Panel alertas (grid-2 en desktop) -->
+  <div class="grid grid-2 dashboard-panels">
+    <!-- Tabla Próximos turnos -->
     <div class="card">
-      <h3>Alertas</h3>
-      <div class="stack">
-        {% if pending_requests > 0 %}
-        <div class="alert">Hay {{ pending_requests }} solicitudes pendientes.</div>
-        {% endif %}
-        {% if periods|length > 0 %}
-        <div class="alert">Existen {{ periods|length }} periodos de pago abiertos.</div>
-        {% endif %}
-        {% if draft_weeks > 0 %}
-        <div class="alert">Hay {{ draft_weeks }} semanas en borrador.</div>
-        {% endif %}
-        {% if pending_requests == 0 and periods|length == 0 and draft_weeks == 0 %}
-        <div class="alert">Sin alertas críticas.</div>
+      <div class="card-header">Próximos turnos</div>
+      <div class="card-body">
+        {% if upcoming_shifts and upcoming_shifts|length > 0 %}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Empleado</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in upcoming_shifts %}
+              <tr>
+                <td>{{ s.date|date_esp('%d/%m') }}</td>
+                <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
+                <td>{{ s.employee.full_name }}</td>
+                <td>{{ s.shift_role }}</td>
+                <td>
+                  {% if s.status in ['BORRADOR', 'EN_REVISION'] %}
+                  <span class="badge warning">{{ s.status }}</span>
+                  {% elif s.status in ['PUBLICADA', 'COMPLETADO', 'PAGADO', 'CERRADA', 'APROBADO', 'CONFIRMADO'] %}
+                  <span class="badge success">{{ s.status }}</span>
+                  {% elif s.status in ['AUSENTE', 'DIFERENCIA', 'ANULADO', 'RECHAZADO'] %}
+                  <span class="badge danger">{{ s.status }}</span>
+                  {% else %}
+                  <span class="badge neutral">{{ s.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('shifts.calendar') }}" class="btn btn-ghost btn-sm">Ver</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <h3 class="empty-state__title">No hay turnos próximos</h3>
+          <p class="small muted empty-state__text">Cuando publiques una semana, los turnos aparecerán aquí.</p>
+          <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a Turnos</a>
+        </div>
         {% endif %}
       </div>
     </div>
 
+    <!-- Panel Alertas / Incidencias -->
     <div class="card">
-      <h3>Próximos turnos</h3>
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Empleado</th>
-              <th>Rol</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in upcoming_shifts %}
-            <tr>
-              <td>{{ s.date|date_esp('%d/%m') }}</td>
-              <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
-              <td>{{ s.employee.full_name }}</td>
-              <td>{{ s.shift_role }}</td>
-              <td><span class="badge">{{ s.status }}</span></td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="5" class="text-secondary">Sin turnos próximos.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="card-header">Alertas / Incidencias</div>
+      <div class="card-body">
+        {% if has_alerts %}
+        <div class="stack">
+          {% if pending_requests|default(0) > 0 %}
+          <div class="alert warning">
+            <span class="badge warning">{{ pending_requests }}</span>
+            Solicitudes pendientes de aprobación.
+          </div>
+          {% endif %}
+          {% if periods|default([])|length > 0 %}
+          <div class="alert neutral">
+            <span class="badge neutral">{{ periods|length }}</span>
+            Periodos de pago abiertos.
+          </div>
+          {% endif %}
+          {% if draft_weeks|default(0) > 0 %}
+          <div class="alert warning">
+            <span class="badge warning">{{ draft_weeks }}</span>
+            Semanas en borrador.
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="alert neutral empty-state-inline">
+          <span class="empty-state-inline__message">Sin alertas</span>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  window.addEventListener('load', () => {
-    const canvas = document.getElementById('shiftsChart');
+  window.addEventListener('load', function () {
+    var canvas = document.getElementById('shiftsChart');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#a19fb5' : '#64748b';
-    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    var ctx = canvas.getContext('2d');
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var textColor = isDark ? '#a19fb5' : '#64748b';
+    var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
     new Chart(ctx, {
       type: 'bar',
@@ -119,46 +181,41 @@
         labels: ['Borrador', 'Publicada', 'Cerrada'],
         datasets: [{
           label: 'Semanas de Turnos',
-          data: [
-            {{ draft_weeks|default(0)
-        }}, 
-            {{ published_weeks|default(0) }},
-    {{ closed_weeks|default(0) }}
-          ],
-    backgroundColor: ['#fb923c', '#8b5cf6', '#a19fb5'],
-    borderRadius: 12,
-    borderSkipped: false,
-    barThickness: 40
+          data: [{{ draft_weeks|default(0) }}, {{ published_weeks|default(0) }}, {{ closed_weeks|default(0) }}],
+          backgroundColor: ['#f59e0b', '#8b5cf6', '#a19fb5'],
+          borderRadius: 12,
+          borderSkipped: false,
+          barThickness: 40
         }]
       },
-    options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: isDark ? '#1e1b2e' : '#ffffff',
-        titleColor: isDark ? '#f1f0fb' : '#1e1b4b',
-        bodyColor: isDark ? '#a19fb5' : '#64748b',
-        borderColor: isDark ? '#2a2640' : '#e2e8f0',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 12,
-        displayColors: false
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: isDark ? '#1e1b2e' : '#ffffff',
+            titleColor: isDark ? '#f1f0fb' : '#1e1b4b',
+            bodyColor: isDark ? '#a19fb5' : '#64748b',
+            borderColor: isDark ? '#2a2640' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 12,
+            displayColors: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: gridColor },
+            ticks: { color: textColor, stepSize: 1 }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: textColor }
+          }
+        }
       }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: { color: gridColor },
-        ticks: { color: textColor, stepSize: 1 }
-      },
-      x: {
-        grid: { display: false },
-        ticks: { color: textColor }
-      }
-    }
-  }
     });
   });
 </script>
