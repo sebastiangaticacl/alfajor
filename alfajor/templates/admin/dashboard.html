@@ -8,36 +8,20 @@
 <div class="stack">
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="card kpi">
-      <div class="flex-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos hoy</span>
-        <i data-lucide="calendar-check" class="text-primary w-5 h-5"></i>
-      </div>
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos hoy</span>
       <div class="kpi-value">{{ covered_today }} / {{ total_today }}</div>
-      <div class="text-xs mt-2 text-secondary">{{ total_today - covered_today }} pendientes · {{ coverage }}%</div>
     </div>
     <div class="card kpi">
-      <div class="flex-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Semanas</span>
-        <i data-lucide="layers" class="text-success w-5 h-5"></i>
-      </div>
-      <div class="kpi-value">{{ total_weeks }}</div>
-      <div class="text-xs mt-2 text-secondary">{{ published_weeks }} publicadas · {{ draft_weeks }} borradores</div>
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos semana</span>
+      <div class="kpi-value">{{ published_weeks + draft_weeks }}</div>
     </div>
     <div class="card kpi">
-      <div class="flex-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Pagos pendientes</span>
-        <i data-lucide="banknote" class="text-warning w-5 h-5"></i>
-      </div>
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Pagos pendientes</span>
       <div class="kpi-value">{{ periods|length }}</div>
-      <div class="text-xs mt-2 text-secondary">Abiertos o en revisión</div>
     </div>
     <div class="card kpi">
-      <div class="flex-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Alertas</span>
-        <i data-lucide="bell" class="text-danger w-5 h-5"></i>
-      </div>
-      <div class="kpi-value">{{ pending_requests }}</div>
-      <div class="text-xs mt-2 text-secondary">Solicitudes pendientes</div>
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Alertas</span>
+      <div class="kpi-value text-danger">{{ pending_requests }}</div>
     </div>
   </div>
 

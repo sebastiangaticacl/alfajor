@@ -2,76 +2,122 @@
 {% block title %}{{ period.name }} · ALFAJOR{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-  <h2>Detalle de Periodo: {{ period.name }}</h2>
-  <a href="{{ url_for('payroll.period_export_excel', id=period.id) }}"
-    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
-    <span>📊</span> Exportar Excel
-  </a>
-</div>
-<p class="text-secondary">{{ period.start_date|date_esp('%d/%m') }} – {{ period.end_date|date_esp('%d/%m/%Y') }} · {{
-  period.status }}
-  <a href="{{ url_for('reports.payroll_csv', period_id=period.id) }}" class="btn btn-secondary btn-sm">Exportar CSV</a>
-</p>
-
-{% if period.status == 'ABIERTO' and current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
-<form action="{{ url_for('payroll.period_generate', id=period.id) }}" method="post"
-  style="margin-bottom: var(--space-4);">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="btn btn-primary">Generar liquidaciones</button>
-</form>
+{% set total_calc = 0 %}
+{% set total_paid = 0 %}
+{% set pending_count = 0 %}
+{% for st in statements %}
+{% set total_calc = total_calc + st.total_calculated %}
+{% set p = paid_map.get(st.employee_id, 0) %}
+{% set total_paid = total_paid + p %}
+{% if (st.total_calculated - p) > 0 %}
+{% set pending_count = pending_count + 1 %}
 {% endif %}
+{% endfor %}
 
-<div class="card">
-  <div class="table-responsive">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Empleado</th>
-          <th>Calculado</th>
-          <th>Pagado</th>
-          <th>Diferencia</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for st in statements %}
-        {% set paid = paid_map.get(st.employee_id, 0) %}
-        {% set diff = st.total_calculated - paid %}
-        <tr>
-          <td>{{ st.employee.full_name }}</td>
-          <td>{{ st.total_calculated|clp }}</td>
-          <td>{{ paid|clp }}</td>
-          <td>{{ diff|clp }}</td>
-          <td><span
-              class="badge badge-{{ 'success' if st.reconciliation_status == 'PAGADO' else 'warning' if st.reconciliation_status == 'PARCIAL' else 'info' }}">{{
-              st.reconciliation_status }}</span></td>
-          <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="text-secondary">Sin liquidaciones. Generar primero.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="stack">
+  <div class="flex-between">
+    <div class="stack">
+      <h1 class="page-title">{{ period.name }}</h1>
+      <p class="text-secondary">{{ period.start_date|date_esp('%d/%m') }} – {{ period.end_date|date_esp('%d/%m/%Y') }} ·
+        <span class="badge">{{ period.status }}</span></p>
+    </div>
+    <div class="flex gap-3">
+      <a href="{{ url_for('payroll.period_export_excel', id=period.id) }}" class="btn btn-secondary">
+        <i data-lucide="download"></i> Excel
+      </a>
+      {% if period.status == 'ABIERTO' and current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
+      <form action="{{ url_for('payroll.period_generate', id=period.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-primary">Generar liquidaciones</button>
+      </form>
+      {% endif %}
+    </div>
   </div>
-</div>
 
-{% if total and total > per_page %}
-{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
-<div class="pagination">
-  {% if page > 1 %}
-  <a href="{{ url_for('payroll.period_detail', id=period.id, page=page-1, per_page=per_page) }}"
-    class="btn btn-secondary btn-sm">Anterior</a>
-  {% endif %}
-  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %} <a
-    href="{{ url_for('payroll.period_detail', id=period.id, page=page+1, per_page=per_page) }}"
-    class="btn btn-secondary btn-sm">Siguiente</a>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="card kpi">
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Total calculado</span>
+      <div class="kpi-value">{{ total_calc|clp }}</div>
+    </div>
+    <div class="card kpi">
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Total pagado</span>
+      <div class="kpi-value text-success">{{ total_paid|clp }}</div>
+    </div>
+    <div class="card kpi">
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Diferencia</span>
+      <div class="kpi-value {{'text-danger' if (total_calc - total_paid) > 0 else 'text-success'}}">{{ (total_calc -
+        total_paid)|clp }}</div>
+    </div>
+    <div class="card kpi">
+      <span class="text-xs font-bold uppercase tracking-widest text-secondary">Pendientes</span>
+      <div class="kpi-value">{{ pending_count }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex-between mb-6">
+      <h3 class="m-0">Liquidaciones por empleado</h3>
+      <a href="{{ url_for('reports.payroll_csv', period_id=period.id) }}" class="text-sm font-medium">Exportar CSV</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Calculado</th>
+            <th>Pagado</th>
+            <th>Diferencia</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for st in statements %}
+          {% set paid = paid_map.get(st.employee_id, 0) %}
+          {% set diff = st.total_calculated - paid %}
+          <tr>
+            <td>
+              <div class="font-bold">{{ st.employee.full_name }}</div>
+              <div class="text-xs text-secondary">{{ st.employee.document_id }}</div>
+            </td>
+            <td>{{ st.total_calculated|clp }}</td>
+            <td>{{ paid|clp }}</td>
+            <td class="{{'text-danger' if diff > 0 else ''}}">{{ diff|clp }}</td>
+            <td>
+              <span
+                class="badge badge-{{ 'success' if st.reconciliation_status == 'PAGADO' else 'warning' if st.reconciliation_status == 'PARCIAL' else 'info' }}">
+                {{ st.reconciliation_status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Ver
+                detalle</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center p-8 text-secondary italic">No se han generado liquidaciones para este
+              periodo.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if total and total > per_page %}
+  {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('payroll.period_detail', id=period.id, page=page-1, per_page=per_page) }}"
+      class="btn btn-secondary btn-sm">Anterior</a>
     {% endif %}
+    <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %} <a
+      href="{{ url_for('payroll.period_detail', id=period.id, page=page+1, per_page=per_page) }}"
+      class="btn btn-secondary btn-sm">Siguiente</a>
+      {% endif %}
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 {% endblock %}

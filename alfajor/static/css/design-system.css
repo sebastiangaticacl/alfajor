@@ -18,17 +18,16 @@
   --radius-xs: 8px;
 
   --primary: #8b5cf6;
-  --primary-2: #7c3aed;
-  --primary-light: rgba(139, 92, 246, 0.15);
-  --text-on-primary: #ffffff;
-  --danger: #ef4444;
-  --warning: #f59e0b;
   --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
   --overlay: rgba(10, 9, 16, 0.7);
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
+  /* Typography Scale */
   --text-xs: 0.75rem;
   /* 12px */
   --text-sm: 0.875rem;
@@ -49,7 +48,8 @@
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 80px;
   --topbar-height: 72px;
-  --content-max: 1400px;
+  --content-max: 1300px;
+  /* Matched prompt max-width */
 }
 
 html[data-theme="light"] {

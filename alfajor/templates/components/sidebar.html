@@ -2,7 +2,12 @@
 <aside class="sidebar" role="navigation">
   <div class="sidebar-header">
     <div class="brand">
-      <span class="brand-mark">ALFAJOR</span>
+      <div class="flex flex-col">
+        <span class="brand-mark">ALFAJOR</span>
+        <span
+          style="font-size: 10px; text-transform: uppercase; letter-spacing: -0.01em; color: var(--text-secondary); font-weight: 700; line-height: 1;">Sistema
+          de Turnos — Café Cosas Ricas</span>
+      </div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -55,7 +60,7 @@
       class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}" {% if current.startswith('payroll.')
       %} aria-current="page" {% endif %}>
       <i data-lucide="file-text" class="w-5 h-5"></i>
-      <span>Mis liquidaciones</span>
+      <span>Pagos</span>
     </a>
     {% endif %}
     {% if current_user.role == 'TRABAJADOR' %}
