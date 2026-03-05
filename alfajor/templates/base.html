@@ -6,33 +6,72 @@
   <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('alfajor-theme') || 'dark');</script>
   <title>{% block title %}ALFAJOR · Cosas Ricas{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a href="#main-content" class="skip-link">Saltar al contenido</a>
-  <div class="app-layout">
-    {% block topbar %}
-    {% include "components/topbar.html" %}
+  <div class="layout">
+    {% if show_sidebar|default(true) %}
+    {% block sidebar %}
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">ALFAJOR</span>
+        <span class="brand-sub">Sistema de Turnos</span>
+      </div>
+      <nav class="nav">
+        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+        <a class="nav-link" href="{{ url_for('shifts.calendar') }}">Turnos</a>
+        <a class="nav-link" href="{{ url_for('employees.list') }}">Personas</a>
+        <a class="nav-link" href="{{ url_for('payroll.periods') }}">Pagos</a>
+        <a class="nav-link" href="{{ url_for('ranking.index') }}">Ranking</a>
+        <a class="nav-link" href="{{ url_for('settings.index') }}">Config</a>
+      </nav>
+    </aside>
     {% endblock %}
+    {% endif %}
 
-    <div class="app-body">
-      {% if show_sidebar|default(true) %}
-      {% block sidebar %}
-      {% include "components/sidebar.html" %}
+    <div class="content">
+      {% block topbar %}
+      <header class="topbar">
+        <button type="button" class="sidebar-toggle" aria-label="Abrir menu">☰</button>
+        <div class="topbar-title">
+          <h1 class="topbar-heading">{% block topbar_title %}{{ self.title()|striptags }}{% endblock %}</h1>
+          <div class="breadcrumbs">{% block breadcrumbs %}{% endblock %}</div>
+        </div>
+        <div class="topbar-user">
+          {% if current_user.is_authenticated %}
+          <span class="user-email">{{ current_user.email }}</span>
+          <form action="{{ url_for('auth.logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">Salir</button>
+          </form>
+          {% endif %}
+        </div>
+      </header>
       {% endblock %}
-      {% endif %}
 
-      <main id="main-content" class="app-main" role="main">
+      <main id="main-content" class="content-inner">
         {% include "components/alerts.html" %}
         {% block content %}{% endblock %}
       </main>
-    </div>
 
-    {% block footer %}
-    {% include "components/footer.html" %}
-    {% endblock %}
+      <footer class="footer">
+        Desarrollado por Seba Gatica · 2026
+      </footer>
+    </div>
   </div>
+
+  <script>
+    (function() {
+      var toggle = document.querySelector('.sidebar-toggle');
+      var layout = document.querySelector('.layout');
+      if (!toggle || !layout) return;
+      toggle.addEventListener('click', function() {
+        document.body.classList.toggle('sidebar-open');
+      });
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
