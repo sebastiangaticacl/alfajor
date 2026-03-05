@@ -17,9 +17,17 @@ Sistema de gestión de turnos, pagos y ranking para el Café Cosas Ricas.
 ## Requisitos
 
 - Python 3.9+
-- PostgreSQL (producción) / SQLite (desarrollo)
+- Docker & Docker Compose (Recomendado)
+- PostgreSQL (producción) / SQLite (desarrollo local sin Docker)
 
-## Instalación
+## Ejecución con Docker (Recomendado)
+
+```bash
+docker-compose up --build
+```
+Esto inicializará la aplicación y la base de datos PostgreSQL automáticamente.
+
+## Instalación Manual (Sin Docker)
 
 ```bash
 git clone https://github.com/stvaldiviazal-create/alfajor.git

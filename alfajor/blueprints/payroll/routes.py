@@ -1,8 +1,10 @@
 """Rutas nómina."""
 
 from datetime import date, timedelta, datetime
-from flask import render_template, redirect, url_for, flash, request
+import io
+from flask import render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_required, current_user
+from openpyxl import Workbook
 from alfajor.utils.decorators import admin_required, contabilidad_or_admin
 from alfajor.blueprints.payroll import bp
 from alfajor.extensions import db
@@ -25,7 +27,7 @@ def periods():
     return render_template("payroll/periods.html", periods=periods_list, page=page, per_page=per_page, total=total)
 
 
-@bp.route("/my")
+@bp.route("/mis-liquidaciones")
 @login_required
 def my_statements():
     if not current_user.employee_id:
@@ -46,7 +48,7 @@ def my_statements():
     )
 
 
-@bp.route("/period/new", methods=["GET", "POST"])
+@bp.route("/periodo/nuevo", methods=["GET", "POST"])
 @login_required
 @contabilidad_or_admin
 def period_new():
@@ -79,7 +81,7 @@ def period_new():
     return render_template("payroll/period_form.html")
 
 
-@bp.route("/period/<id>")
+@bp.route("/periodo/<id>")
 @login_required
 @contabilidad_or_admin
 def period_detail(id):
@@ -106,7 +108,7 @@ def period_detail(id):
     )
 
 
-@bp.route("/period/<id>/generate", methods=["POST"])
+@bp.route("/periodo/<id>/generar", methods=["POST"])
 @login_required
 @contabilidad_or_admin
 def period_generate(id):
@@ -116,7 +118,7 @@ def period_generate(id):
     return redirect(url_for("payroll.period_detail", id=id))
 
 
-@bp.route("/statement/<id>")
+@bp.route("/liquidacion/<id>")
 @login_required
 def statement_detail(id):
     st = PayStatement.query.get_or_404(id)
@@ -126,7 +128,7 @@ def statement_detail(id):
     return render_template("payroll/statement_detail.html", statement=st)
 
 
-@bp.route("/transaction/new", methods=["GET", "POST"])
+@bp.route("/transaccion/nueva", methods=["GET", "POST"])
 @login_required
 @contabilidad_or_admin
 def transaction_new():
@@ -185,3 +187,40 @@ def transaction_new():
     periods = PayPeriod.query.order_by(PayPeriod.start_date.desc()).limit(20).all()
     employees = Employee.query.filter_by(status="ACTIVO").order_by(Employee.last_name).all()
     return render_template("payroll/transaction_form.html", periods=periods, employees=employees)
+
+
+@bp.route("/periodo/<id>/exportar")
+@login_required
+@contabilidad_or_admin
+def period_export_excel(id):
+    period = PayPeriod.query.get_or_404(id)
+    statements = PayStatement.query.options(selectinload(PayStatement.employee)).filter_by(
+        pay_period_id=period.id
+    ).all()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Liquidaciones"
+
+    # Header
+    ws.append(["Empleado", "Base", "HE", "Recargos", "Bonos", "Descuentos", "Total", "Estado"])
+
+    # Data
+    for s in statements:
+        ws.append([
+            s.employee.full_name,
+            float(s.total_base_hours),
+            float(s.total_overtime_hours),
+            float(s.total_surcharges),
+            float(s.total_bonuses),
+            float(s.total_deductions),
+            float(s.total_calculated),
+            s.reconciliation_status
+        ])
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"nomina_{period.name}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

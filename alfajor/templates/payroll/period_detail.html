@@ -2,13 +2,21 @@
 {% block title %}{{ period.name }} · ALFAJOR{% endblock %}
 
 {% block content %}
-<h1 class="page-title">{{ period.name }}</h1>
-<p class="text-secondary">{{ period.start_date.strftime('%d/%m') }} – {{ period.end_date.strftime('%d/%m/%Y') }} · {{ period.status }}
+<div class="flex justify-between items-center mb-6">
+  <h2>Detalle de Periodo: {{ period.name }}</h2>
+  <a href="{{ url_for('payroll.period_export_excel', id=period.id) }}"
+    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+    <span>📊</span> Exportar Excel
+  </a>
+</div>
+<p class="text-secondary">{{ period.start_date|date_esp('%d/%m') }} – {{ period.end_date|date_esp('%d/%m/%Y') }} · {{
+  period.status }}
   <a href="{{ url_for('reports.payroll_csv', period_id=period.id) }}" class="btn btn-secondary btn-sm">Exportar CSV</a>
 </p>
 
 {% if period.status == 'ABIERTO' and current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
-<form action="{{ url_for('payroll.period_generate', id=period.id) }}" method="post" style="margin-bottom: var(--space-4);">
+<form action="{{ url_for('payroll.period_generate', id=period.id) }}" method="post"
+  style="margin-bottom: var(--space-4);">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn btn-primary">Generar liquidaciones</button>
 </form>
@@ -36,11 +44,16 @@
           <td>{{ st.total_calculated|clp }}</td>
           <td>{{ paid|clp }}</td>
           <td>{{ diff|clp }}</td>
-          <td><span class="badge badge-{{ 'success' if st.reconciliation_status == 'PAGADO' else 'warning' if st.reconciliation_status == 'PARCIAL' else 'info' }}">{{ st.reconciliation_status }}</span></td>
-          <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
+          <td><span
+              class="badge badge-{{ 'success' if st.reconciliation_status == 'PAGADO' else 'warning' if st.reconciliation_status == 'PARCIAL' else 'info' }}">{{
+              st.reconciliation_status }}</span></td>
+          <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a>
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="text-secondary">Sin liquidaciones. Generar primero.</td></tr>
+        <tr>
+          <td colspan="6" class="text-secondary">Sin liquidaciones. Generar primero.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -51,12 +64,14 @@
 {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
 <div class="pagination">
   {% if page > 1 %}
-  <a href="{{ url_for('payroll.period_detail', id=period.id, page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  <a href="{{ url_for('payroll.period_detail', id=period.id, page=page-1, per_page=per_page) }}"
+    class="btn btn-secondary btn-sm">Anterior</a>
   {% endif %}
   <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %}
-  <a href="{{ url_for('payroll.period_detail', id=period.id, page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
-  {% endif %}
+  {% if page < total_pages %} <a
+    href="{{ url_for('payroll.period_detail', id=period.id, page=page+1, per_page=per_page) }}"
+    class="btn btn-secondary btn-sm">Siguiente</a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

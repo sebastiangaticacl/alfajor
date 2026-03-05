@@ -6,34 +6,46 @@
 {% set coverage = ((covered_today * 100) // total_today) if total_today > 0 else 0 %}
 
 <div class="stack">
-  <div class="grid dashboard-kpis">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="card kpi">
-      <span class="pill">Turnos hoy</span>
+      <div class="flex-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Turnos hoy</span>
+        <i data-lucide="calendar-check" class="text-primary w-5 h-5"></i>
+      </div>
       <div class="kpi-value">{{ covered_today }} / {{ total_today }}</div>
-      <span class="text-secondary">{{ total_today - covered_today }} pendientes · {{ coverage }}%</span>
+      <div class="text-xs mt-2 text-secondary">{{ total_today - covered_today }} pendientes · {{ coverage }}%</div>
     </div>
     <div class="card kpi">
-      <span class="pill">Semanas</span>
+      <div class="flex-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Semanas</span>
+        <i data-lucide="layers" class="text-success w-5 h-5"></i>
+      </div>
       <div class="kpi-value">{{ total_weeks }}</div>
-      <span class="text-secondary">{{ published_weeks }} publicadas · {{ draft_weeks }} borradores</span>
+      <div class="text-xs mt-2 text-secondary">{{ published_weeks }} publicadas · {{ draft_weeks }} borradores</div>
     </div>
     <div class="card kpi">
-      <span class="pill">Pagos pendientes</span>
+      <div class="flex-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Pagos pendientes</span>
+        <i data-lucide="banknote" class="text-warning w-5 h-5"></i>
+      </div>
       <div class="kpi-value">{{ periods|length }}</div>
-      <span class="text-secondary">Abiertos o en revisión</span>
+      <div class="text-xs mt-2 text-secondary">Abiertos o en revisión</div>
     </div>
     <div class="card kpi">
-      <span class="pill">Alertas</span>
+      <div class="flex-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Alertas</span>
+        <i data-lucide="bell" class="text-danger w-5 h-5"></i>
+      </div>
       <div class="kpi-value">{{ pending_requests }}</div>
-      <span class="text-secondary">Solicitudes pendientes</span>
+      <div class="text-xs mt-2 text-secondary">Solicitudes pendientes</div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card mb-8">
     <div class="grid dashboard-actions">
       <div class="stack">
-        <h3>Acciones rápidas</h3>
-        <span class="text-secondary">Atajos para gestión diaria.</span>
+        <h2 class="text-xl font-extrabold tracking-tight">Acciones rápidas</h2>
+        <span class="text-secondary text-sm">Atajos para gestión diaria.</span>
       </div>
       <div class="stack">
         <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
@@ -41,9 +53,14 @@
       </div>
       <div class="stack">
         <a href="{{ url_for('requests.list') }}" class="btn btn-secondary">Solicitudes</a>
-        <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Personas</a>
+        <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Empleados</a>
       </div>
     </div>
+  </div>
+
+  <div class="card mb-8">
+    <h3>Distribución de Turnos</h3>
+    <canvas id="shiftsChart" height="100"></canvas>
   </div>
 
   <div class="grid dashboard-panels">
@@ -81,14 +98,16 @@
           <tbody>
             {% for s in upcoming_shifts %}
             <tr>
-              <td>{{ s.date.strftime('%d/%m') }}</td>
+              <td>{{ s.date|date_esp('%d/%m') }}</td>
               <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
               <td>{{ s.employee.full_name }}</td>
               <td>{{ s.shift_role }}</td>
               <td><span class="badge">{{ s.status }}</span></td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-secondary">Sin turnos próximos.</td></tr>
+            <tr>
+              <td colspan="5" class="text-secondary">Sin turnos próximos.</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -96,4 +115,67 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  window.addEventListener('load', () => {
+    const canvas = document.getElementById('shiftsChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#a19fb5' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Borrador', 'Publicada', 'Cerrada'],
+        datasets: [{
+          label: 'Semanas de Turnos',
+          data: [
+            {{ draft_weeks|default(0)
+        }}, 
+            {{ published_weeks|default(0) }},
+    {{ closed_weeks|default(0) }}
+          ],
+    backgroundColor: ['#fb923c', '#8b5cf6', '#a19fb5'],
+    borderRadius: 12,
+    borderSkipped: false,
+    barThickness: 40
+        }]
+      },
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: isDark ? '#1e1b2e' : '#ffffff',
+        titleColor: isDark ? '#f1f0fb' : '#1e1b4b',
+        bodyColor: isDark ? '#a19fb5' : '#64748b',
+        borderColor: isDark ? '#2a2640' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 12,
+        displayColors: false
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: gridColor },
+        ticks: { color: textColor, stepSize: 1 }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: textColor }
+      }
+    }
+  }
+    });
+  });
+</script>
 {% endblock %}

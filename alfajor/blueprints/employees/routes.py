@@ -23,7 +23,7 @@ def list():
     return render_template("employees/list.html", employees=employees, page=1, per_page=per_page, total=len(employees))
 
 
-@bp.route("/new", methods=["GET", "POST"])
+@bp.route("/nuevo", methods=["GET", "POST"])
 @login_required
 @encargado_or_admin
 def new():
@@ -56,7 +56,7 @@ def detail(id):
     return render_template("employees/detail.html", employee=employee)
 
 
-@bp.route("/<id>/edit", methods=["GET", "POST"])
+@bp.route("/<id>/editar", methods=["GET", "POST"])
 @login_required
 @encargado_or_admin
 def edit(id):
@@ -78,7 +78,7 @@ def edit(id):
     return render_template("employees/form.html", form=form, employee=employee)
 
 
-@bp.route("/<id>/delete", methods=["POST"])
+@bp.route("/<id>/eliminar", methods=["POST"])
 @login_required
 @encargado_or_admin
 def delete(id):

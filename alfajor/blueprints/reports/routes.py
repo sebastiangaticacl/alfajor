@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from alfajor.services.ranking_calculator import build_ranking
 
 
-@bp.route("/payroll/csv")
+@bp.route("/nomina/csv")
 @login_required
 @contabilidad_or_admin
 def payroll_csv():

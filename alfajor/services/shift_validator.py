@@ -6,18 +6,46 @@ from alfajor.services.settings_service import get_setting
 
 
 def validate_no_overlap(employee_id, date_val, start_time, end_time, exclude_shift_id=None):
-    """Verifica que no haya solapamiento con otros turnos del empleado."""
-    q = Shift.query.filter(
+    """Verifica que no haya solapamiento con otros turnos del empleado.
+    Busca turnos en el día anterior, actual y siguiente para cubrir cruce de medianoche.
+    """
+    from datetime import timedelta
+    # Rango de fechas a buscar para cubrir posibles cruces de medianoche
+    search_dates = [date_val - timedelta(days=1), date_val, date_val + timedelta(days=1)]
+
+    # Datos del nuevo turno: si cruza medianoche (end <= start)
+    is_midnight = end_time <= start_time
+
+    shifts = Shift.query.filter(
         Shift.employee_id == employee_id,
-        Shift.date == date_val,
-        Shift.status != "ANULADO",
-        Shift.start_time < end_time,
-        Shift.end_time > start_time,
+        Shift.date.in_(search_dates),
+        Shift.status != "ANULADO"
     )
     if exclude_shift_id:
-        q = q.filter(Shift.id != exclude_shift_id)
-    if q.first():
-        return False, "Solapamiento con turno existente"
+        shifts = shifts.filter(Shift.id != exclude_shift_id)
+
+    for s in shifts.all():
+        # Lógica de solapamiento manual para manejar fechas y horas
+        # Turno A (Existente): s.date, s.start_time, s.end_time
+        # Turno B (Nuevo): date_val, start_time, end_time
+
+        # Normalizamos a "minutos desde el inicio de search_dates[0]"
+        def to_abs_min(d, t):
+            base = search_dates[0]
+            days = (d - base).days
+            return days * 1440 + t.hour * 60 + t.minute
+
+        a_start = to_abs_min(s.date, s.start_time)
+        a_end = to_abs_min(s.date, s.end_time)
+        if s.end_time <= s.start_time: a_end += 1440
+
+        b_start = to_abs_min(date_val, start_time)
+        b_end = to_abs_min(date_val, end_time)
+        if is_midnight: b_end += 1440
+
+        if a_start < b_end and b_start < a_end:
+            return False, f"Solapamiento con turno el {s.date.strftime('%d/%m')} ({s.start_time.strftime('%H:%M')}-{s.end_time.strftime('%H:%M')})"
+
     return True, None
 
 
@@ -55,10 +83,8 @@ def validate_weekly_hours(employee_id, week_start, new_hours, exclude_shift_id=N
     if exclude_shift_id:
         q = q.filter(Shift.id != exclude_shift_id)
     shifts = q.all()
-    total = sum(
-        (s.end_time.hour * 60 + s.end_time.minute - s.start_time.hour * 60 - s.start_time.minute) / 60
-        for s in shifts
-    )
+    from alfajor.utils.timecalc import shift_hours
+    total = sum(shift_hours(s.start_time, s.end_time) for s in shifts)
     total += new_hours
     if total > max_h:
         return False, f"Máximo {max_h}h semanales"
@@ -74,7 +100,8 @@ def validate_shift(employee_id, date_val, start_time, end_time, exclude_shift_id
     ok, err = validate_availability(employee_id, dow, start_time, end_time)
     if not ok:
         return ok, err
-    hours = (end_time.hour * 60 + end_time.minute - start_time.hour * 60 - start_time.minute) / 60
+    from alfajor.utils.timecalc import shift_hours
+    hours = shift_hours(start_time, end_time)
     from datetime import timedelta
     week_start = date_val - timedelta(days=date_val.weekday())
     ok, err = validate_weekly_hours(employee_id, week_start, hours, exclude_shift_id)

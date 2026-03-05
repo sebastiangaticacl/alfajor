@@ -1,33 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('alfajor-theme') || 'dark');</script>
   <title>{% block title %}ALFAJOR · Cosas Ricas{% endblock %}</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <script src="https://unpkg.com/lucide@latest"></script>
   {% block head %}{% endblock %}
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
   <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <div class="layout">
     {% if show_sidebar|default(true) %}
     {% block sidebar %}
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">ALFAJOR</span>
-        <span class="brand-sub">Sistema de Turnos</span>
-      </div>
-      <nav class="nav">
-        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-        <a class="nav-link" href="{{ url_for('shifts.calendar') }}">Turnos</a>
-        <a class="nav-link" href="{{ url_for('employees.list') }}">Personas</a>
-        <a class="nav-link" href="{{ url_for('payroll.periods') }}">Pagos</a>
-        <a class="nav-link" href="{{ url_for('ranking.index') }}">Ranking</a>
-        <a class="nav-link" href="{{ url_for('settings.index') }}">Config</a>
-      </nav>
-    </aside>
+    {% include "components/sidebar.html" %}
     {% endblock %}
     {% endif %}
 
@@ -39,12 +38,18 @@
           <h1 class="topbar-heading">{% block topbar_title %}{{ self.title()|striptags }}{% endblock %}</h1>
           <div class="breadcrumbs">{% block breadcrumbs %}{% endblock %}</div>
         </div>
-        <div class="topbar-user">
+        <div class="topbar-user flex items-center gap-4">
+          <button id="theme-toggle"
+            class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Cambiar tema">
+            <span class="dark:hidden">🌙</span>
+            <span class="hidden dark:inline">☀️</span>
+          </button>
           {% if current_user.is_authenticated %}
-          <span class="user-email">{{ current_user.email }}</span>
-          <form action="{{ url_for('auth.logout') }}" method="post">
+          <span class="user-email text-sm text-slate-600 dark:text-slate-400">{{ current_user.email }}</span>
+          <form action="{{ url_for('auth.logout') }}" method="post" class="m-0">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-secondary">Salir</button>
+            <button type="submit"
+              class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-3 py-1.5 rounded-lg text-sm transition-colors">Salir</button>
           </form>
           {% endif %}
         </div>
@@ -63,15 +68,36 @@
   </div>
 
   <script>
-    (function() {
-      var toggle = document.querySelector('.sidebar-toggle');
-      var layout = document.querySelector('.layout');
-      if (!toggle || !layout) return;
-      toggle.addEventListener('click', function() {
-        document.body.classList.toggle('sidebar-open');
-      });
-    })();
+      (function () {
+        var toggle = document.querySelector('.sidebar-toggle');
+        var layout = document.querySelector('.layout');
+        if (toggle && layout) {
+          toggle.addEventListener('click', function () {
+            document.body.classList.toggle('sidebar-open');
+          });
+        }
+
+        var themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+          themeToggle.addEventListener('click', function () {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('alfajor-theme', next);
+            if (next === 'dark') {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          });
+        }
+        if (localStorage.getItem('alfajor-theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+        lucide.createIcons();
+      })();
   </script>
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

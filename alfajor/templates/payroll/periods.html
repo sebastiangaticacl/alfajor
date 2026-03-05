@@ -5,8 +5,10 @@
 <h1 class="page-title">Periodos de pago</h1>
 <p class="text-secondary">Liquidaciones y conciliación.</p>
 
-<a href="{{ url_for('payroll.period_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo periodo</a>
-<a href="{{ url_for('payroll.transaction_new') }}" class="btn btn-secondary" style="margin-bottom: var(--space-4);">Registrar pago</a>
+<a href="{{ url_for('payroll.period_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo
+  periodo</a>
+<a href="{{ url_for('payroll.transaction_new') }}" class="btn btn-secondary"
+  style="margin-bottom: var(--space-4);">Registrar pago</a>
 
 <div class="card">
   <div class="table-responsive">
@@ -23,12 +25,16 @@
         {% for p in periods %}
         <tr>
           <td>{{ p.name }}</td>
-          <td>{{ p.start_date.strftime('%d/%m') }} – {{ p.end_date.strftime('%d/%m/%Y') }}</td>
-          <td><span class="badge badge-{{ 'info' if p.status == 'ABIERTO' else 'success' if p.status == 'PAGADO' else 'warning' }}">{{ p.status }}</span></td>
+          <td>{{ p.start_date|date_esp('%d/%m') }} – {{ p.end_date|date_esp('%d/%m/%Y') }}</td>
+          <td><span
+              class="badge badge-{{ 'info' if p.status == 'ABIERTO' else 'success' if p.status == 'PAGADO' else 'warning' }}">{{
+              p.status }}</span></td>
           <td><a href="{{ url_for('payroll.period_detail', id=p.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="text-secondary">Sin periodos.</td></tr>
+        <tr>
+          <td colspan="4" class="text-secondary">Sin periodos.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -39,12 +45,13 @@
 {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
 <div class="pagination">
   {% if page > 1 %}
-  <a href="{{ url_for('payroll.periods', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  <a href="{{ url_for('payroll.periods', page=page-1, per_page=per_page) }}"
+    class="btn btn-secondary btn-sm">Anterior</a>
   {% endif %}
   <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %}
-  <a href="{{ url_for('payroll.periods', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
-  {% endif %}
+  {% if page < total_pages %} <a href="{{ url_for('payroll.periods', page=page+1, per_page=per_page) }}"
+    class="btn btn-secondary btn-sm">Siguiente</a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

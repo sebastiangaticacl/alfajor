@@ -8,7 +8,7 @@
 <div class="filter-bar sticky">
   <div class="filter-left">
     <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary btn-sm">← Anterior</a>
-    <span class="calendar-range">{{ monday.strftime('%d/%m') }} – {{ sunday.strftime('%d/%m/%Y') }}</span>
+    <span class="calendar-range">{{ monday|date_esp('%d/%m') }} – {{ sunday|date_esp('%d/%m/%Y') }}</span>
     <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary btn-sm">Siguiente →</a>
   </div>
   <div class="filter-right">
@@ -35,7 +35,9 @@
 {% endif %}
 
 {% if week %}
-<div class="week-status badge badge-{{ 'info' if week.status == 'BORRADOR' else 'success' if week.status == 'PUBLICADA' else 'warning' }}">{{ week.status }}</div>
+<div
+  class="week-status badge badge-{{ 'info' if week.status == 'BORRADOR' else 'success' if week.status == 'PUBLICADA' else 'warning' }}">
+  {{ week.status }}</div>
 {% if week.status == 'BORRADOR' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
 <form action="{{ url_for('shifts.week_publish', id=week.id) }}" method="post" style="display:inline;">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -67,7 +69,8 @@
     <div class="form-row">
       <div class="form-group">
         <label for="shift_date">Fecha</label>
-        <input type="date" id="shift_date" name="date" class="form-input" value="{{ monday.isoformat() }}" min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
+        <input type="date" id="shift_date" name="date" class="form-input" value="{{ monday.isoformat() }}"
+          min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
       </div>
       <div class="form-group">
         <label for="shift_employee">Empleado</label>
@@ -125,14 +128,15 @@
       <tbody>
         {% for s in shifts %}
         <tr>
-          <td>{{ s.date.strftime('%d/%m') }}</td>
+          <td>{{ s.date|date_esp('%d/%m') }}</td>
           <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
           <td>{{ s.employee.full_name }}</td>
           <td>{{ s.shift_role }}</td>
           <td><span class="badge badge-info">{{ s.status }}</span></td>
           {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
           <td>
-            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar turno?');">
+            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;"
+              onsubmit="return confirm('¿Eliminar turno?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
             </form>
@@ -140,7 +144,9 @@
           {% endif %}
         </tr>
         {% else %}
-        <tr><td colspan="6" class="text-secondary">Sin turnos esta semana.</td></tr>
+        <tr>
+          <td colspan="6" class="text-secondary">Sin turnos esta semana.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -149,36 +155,36 @@
 <div class="schedule-layout">
   <div class="card schedule-card">
     <div class="schedule-header">
-    <div>
-      <h2 class="schedule-title">Programación semanal</h2>
-      <p class="text-sm text-muted">Distribución de turnos por día y empleado.</p>
+      <div>
+        <h2 class="schedule-title">Programación semanal</h2>
+        <p class="text-sm text-muted">Distribución de turnos por día y empleado.</p>
+      </div>
+      <div class="schedule-legend">
+        {% for role in shift_roles %}
+        <span class="legend-item" data-role="{{ role }}">{{ role|capitalize }}</span>
+        {% endfor %}
+      </div>
     </div>
-    <div class="schedule-legend">
-      {% for role in shift_roles %}
-      <span class="legend-item" data-role="{{ role }}">{{ role|capitalize }}</span>
-      {% endfor %}
+    <div class="schedule-controls">
+      <div class="control-group">
+        <button type="button" class="btn btn-secondary btn-sm" id="toggle-select">Seleccionar turnos</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="bulk-edit" disabled>Editar selección</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="bulk-duplicate" disabled>Duplicar selección</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="clear-selection" disabled>Limpiar</button>
+      </div>
+      <div class="control-group">
+        <button type="button" class="btn btn-secondary btn-sm" id="undo-action" disabled>Deshacer</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="redo-action" disabled>Rehacer</button>
+      </div>
     </div>
-  </div>
-  <div class="schedule-controls">
-    <div class="control-group">
-      <button type="button" class="btn btn-secondary btn-sm" id="toggle-select">Seleccionar turnos</button>
-      <button type="button" class="btn btn-secondary btn-sm" id="bulk-edit" disabled>Editar selección</button>
-      <button type="button" class="btn btn-secondary btn-sm" id="bulk-duplicate" disabled>Duplicar selección</button>
-      <button type="button" class="btn btn-secondary btn-sm" id="clear-selection" disabled>Limpiar</button>
-    </div>
-    <div class="control-group">
-      <button type="button" class="btn btn-secondary btn-sm" id="undo-action" disabled>Deshacer</button>
-      <button type="button" class="btn btn-secondary btn-sm" id="redo-action" disabled>Rehacer</button>
-    </div>
-  </div>
 
-  <div class="schedule-grid" id="schedule-grid">
+    <div class="schedule-grid" id="schedule-grid">
       <div class="schedule-row schedule-row--header">
         <div class="schedule-cell schedule-cell--name">Empleado</div>
         {% for day in week_days %}
         <div class="schedule-cell schedule-cell--day{% if day.weekday() >= 5 %} is-weekend{% endif %}">
-          <span class="day-name">{{ day.strftime('%a') }}</span>
-          <span class="day-date">{{ day.strftime('%d/%m') }}</span>
+          <span class="day-name">{{ day|date_esp('%a') }}</span>
+          <span class="day-date">{{ day|date_esp('%d/%m') }}</span>
         </div>
         {% endfor %}
         <div class="schedule-cell schedule-cell--total">Total</div>
@@ -188,45 +194,43 @@
       <div class="schedule-row schedule-row--branch">
         <div class="schedule-cell schedule-cell--branch">
           <span class="branch-name">{{ group.branch.name if group.branch else 'Sin sucursal' }}</span>
-          <span class="branch-total">{{ '%.2f'|format(branch_totals.get(group.branch.id|string if group.branch else '', 0)) }}h</span>
+          <span class="branch-total">{{ '%.2f'|format(branch_totals.get(group.branch.id|string if group.branch else '',
+            0)) }}h</span>
         </div>
       </div>
-        {% for e in group.employees %}
-        <div class="schedule-row">
-          <div class="schedule-cell schedule-cell--name">
-            <div class="employee-name">{{ e.full_name }}</div>
-            <div class="employee-meta text-muted">{{ e.base_role or '—' }}</div>
+      {% for e in group.employees %}
+      <div class="schedule-row">
+        <div class="schedule-cell schedule-cell--name">
+          <div class="employee-name">{{ e.full_name }}</div>
+          <div class="employee-meta text-muted">{{ e.base_role or '—' }}</div>
+        </div>
+        {% for day in week_days %}
+        {% set day_key = day.isoformat() %}
+        <div class="schedule-cell schedule-cell--shift{% if day.weekday() >= 5 %} is-weekend{% endif %}"
+          data-employee-id="{{ e.id }}" data-date="{{ day_key }}">
+          {% for s in schedule_map.get(e.id|string, {}).get(day_key, []) %}
+          <div class="shift-chip" data-role="{{ s.shift_role }}" draggable="true" data-shift-id="{{ s.id }}"
+            data-employee-id="{{ e.id }}" data-date="{{ day_key }}" data-start="{{ s.start_time.strftime('%H:%M') }}"
+            data-end="{{ s.end_time.strftime('%H:%M') }}" data-shift-role="{{ s.shift_role }}">
+            <span class="shift-role">{{ s.shift_role|capitalize }}</span>
+            <span class="shift-time">{{ s.start_time|date_esp('%H:%M') }}–{{ s.end_time|date_esp('%H:%M') }}</span>
+            {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+            <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="shift-delete">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" aria-label="Eliminar turno" title="Eliminar turno">×</button>
+            </form>
+            {% endif %}
           </div>
-      {% for day in week_days %}
-          {% set day_key = day.isoformat() %}
-      <div class="schedule-cell schedule-cell--shift{% if day.weekday() >= 5 %} is-weekend{% endif %}" data-employee-id="{{ e.id }}" data-date="{{ day_key }}">
-            {% for s in schedule_map.get(e.id|string, {}).get(day_key, []) %}
-        <div class="shift-chip" data-role="{{ s.shift_role }}" draggable="true"
-             data-shift-id="{{ s.id }}"
-             data-employee-id="{{ e.id }}"
-             data-date="{{ day_key }}"
-             data-start="{{ s.start_time.strftime('%H:%M') }}"
-             data-end="{{ s.end_time.strftime('%H:%M') }}"
-             data-shift-role="{{ s.shift_role }}">
-              <span class="shift-role">{{ s.shift_role|capitalize }}</span>
-              <span class="shift-time">{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</span>
-              {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-          <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="shift-delete">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" aria-label="Eliminar turno" title="Eliminar turno">×</button>
-              </form>
-              {% endif %}
-            </div>
-            {% else %}
-            <span class="shift-empty">—</span>
-            {% endfor %}
-          </div>
+          {% else %}
+          <span class="shift-empty">—</span>
           {% endfor %}
-          <div class="schedule-cell schedule-cell--total">
-        {{ '%.2f'|format(employee_hours.get(e.id|string, 0)) }}h
-          </div>
         </div>
         {% endfor %}
+        <div class="schedule-cell schedule-cell--total">
+          {{ '%.2f'|format(employee_hours.get(e.id|string, 0)) }}h
+        </div>
+      </div>
+      {% endfor %}
       {% endfor %}
 
       <div class="schedule-row schedule-row--totals">
@@ -280,7 +284,7 @@
           {% for day in week_days %}
           {% set day_key = day.isoformat() %}
           <tr>
-            <td>{{ day.strftime('%a %d') }}</td>
+            <td>{{ day|date_esp('%a %d') }}</td>
             <td>{{ '%.2f'|format(day_segments.get(day_key, {}).M) }}</td>
             <td>{{ '%.2f'|format(day_segments.get(day_key, {}).T) }}</td>
             <td>{{ '%.2f'|format(day_segments.get(day_key, {}).N) }}</td>
@@ -345,7 +349,7 @@
 
 {% block scripts %}
 <script>
-  (function() {
+  (function () {
     const grid = document.getElementById('schedule-grid');
     const csrfToken = document.getElementById('csrf-token').value;
     const editor = document.getElementById('shift-editor');
@@ -442,7 +446,7 @@
       bulkDuplicate.addEventListener('click', () => {
         if (selected.size === 0) return;
         const chips = Array.from(selected).map(id => document.querySelector(`.shift-chip[data-shift-id="${id}"]`));
-        const action = {type: 'create', shifts: []};
+        const action = { type: 'create', shifts: [] };
         Promise.all(chips.map(chip => {
           const payload = {
             employee_id: chip.dataset.employeeId,
@@ -453,7 +457,7 @@
           };
           return postCreate(payload).then(resp => {
             if (resp.shift_id) {
-              action.shifts.push({shift_id: resp.shift_id, payload});
+              action.shifts.push({ shift_id: resp.shift_id, payload });
             }
           });
         })).then(() => {
@@ -464,7 +468,7 @@
     }
 
     function postUpdate(payload) {
-      return fetch(`/shifts/shift/${payload.shift_id}/update`, {
+      return fetch(`/turnos/turno/${payload.shift_id}/actualizar`, {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -475,7 +479,7 @@
     }
 
     function postCreate(payload) {
-      return fetch('/shifts/shift/create', {
+      return fetch('/turnos/turno/crear', {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -487,7 +491,7 @@
     }
 
     function postBulkUpdate(payload) {
-      return fetch('/shifts/shift/bulk-update', {
+      return fetch('/turnos/turno/actualizacion-masiva', {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -499,14 +503,14 @@
     }
 
     function postDelete(shiftId) {
-      return fetch(`/shifts/shift/${shiftId}/delete`, {
+      return fetch(`/turnos/turno/${shiftId}/eliminar`, {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
           'X-CSRFToken': csrfToken
         },
-        body: new URLSearchParams({csrf_token: csrfToken})
-      }).then(r => r.ok ? {status: 'success'} : r.json());
+        body: new URLSearchParams({ csrf_token: csrfToken })
+      }).then(r => r.ok ? { status: 'success' } : r.json());
     }
 
     function applyAction(action, reverse) {
@@ -637,7 +641,7 @@
         end_time: chip.dataset.end,
         shift_role: chip.dataset.shiftRole
       };
-      const action = {type: 'delete', shifts: [{shift_id: chip.dataset.shiftId, payload}]};
+      const action = { type: 'delete', shifts: [{ shift_id: chip.dataset.shiftId, payload }] };
       postDelete(chip.dataset.shiftId).then(resp => {
         if (resp.status === 'success') {
           pushHistory(action);
@@ -683,7 +687,7 @@
           end_time: payload.end_time || s.prev.end_time,
           shift_role: payload.shift_role || s.prev.shift_role
         }));
-        const action = {type: 'update', shifts: shifts.map((s, i) => ({shift_id: s.shift_id, prev: s.prev, next: next[i]}))};
+        const action = { type: 'update', shifts: shifts.map((s, i) => ({ shift_id: s.shift_id, prev: s.prev, next: next[i] })) };
         postBulkUpdate(payload).then(resp => {
           if (resp.status === 'success') {
             pushHistory(action);
@@ -712,7 +716,7 @@
           shift_role: document.getElementById('editor-role').value,
           csrf_token: csrfToken
         };
-        const action = {type: 'update', shifts: [{shift_id: shiftId, prev, next: payload}]};
+        const action = { type: 'update', shifts: [{ shift_id: shiftId, prev, next: payload }] };
         postUpdate(payload).then(resp => {
           if (resp.status === 'success') {
             pushHistory(action);

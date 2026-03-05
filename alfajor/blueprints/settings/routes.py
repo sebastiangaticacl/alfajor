@@ -56,7 +56,7 @@ def index():
     return render_template("admin/config.html", settings=settings, branches=branches)
 
 
-@bp.route("/setting/<key>", methods=["POST"])
+@bp.route("/ajuste/<key>", methods=["POST"])
 @login_required
 @admin_required
 def update_setting(key):
@@ -78,7 +78,7 @@ def update_setting(key):
     return redirect(url_for("settings.index"))
 
 
-@bp.route("/bulk-settings", methods=["POST"])
+@bp.route("/ajustes-masivos", methods=["POST"])
 @login_required
 @admin_required
 def bulk_settings():
@@ -109,7 +109,7 @@ def bulk_settings():
     return redirect(url_for("settings.index"))
 
 
-@bp.route("/branch/new", methods=["GET", "POST"])
+@bp.route("/sucursal/nueva", methods=["GET", "POST"])
 @login_required
 @admin_required
 def branch_new():
@@ -126,7 +126,7 @@ def branch_new():
     return render_template("admin/branch_form.html", branch=None)
 
 
-@bp.route("/branch/<id>/edit", methods=["GET", "POST"])
+@bp.route("/sucursal/<id>/editar", methods=["GET", "POST"])
 @login_required
 @admin_required
 def branch_edit(id):

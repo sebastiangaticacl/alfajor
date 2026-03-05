@@ -37,7 +37,7 @@ def index():
     )
 
 
-@bp.route("/my")
+@bp.route("/mi-puntaje")
 @login_required
 def my_score():
     if not current_user.employee_id:

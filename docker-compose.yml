@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=alfajor
+      - POSTGRES_PASSWORD=alfajor
+      - POSTGRES_DB=alfajor
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alfajor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://alfajor:alfajor@db:5432/alfajor
+      - SECRET_KEY=dev-secret-key-123
+      - FLASK_APP=alfajor
+      - FLASK_ENV=development
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -7,7 +7,7 @@ from alfajor.blueprints.auth.forms import LoginForm
 from alfajor.models import User
 
 
-@bp.route("/login", methods=["GET", "POST"])
+@bp.route("/iniciar-sesion", methods=["GET", "POST"])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -23,7 +23,7 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-@bp.route("/logout", methods=["POST"])
+@bp.route("/cerrar-sesion", methods=["POST"])
 @login_required
 def logout():
     logout_user()

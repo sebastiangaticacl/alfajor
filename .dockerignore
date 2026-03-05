@@ -1,0 +1,13 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+.env
+alfajor.db
+.git
+.gitignore
+migrations/
+*.log
+.DS_Store

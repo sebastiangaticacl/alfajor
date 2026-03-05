@@ -34,12 +34,23 @@ def generate_statements_for_period(period_id):
 
 
 def _calculate_statement_from_shifts(period, employee, shifts):
-    """Calcula y crea PayStatement usando turnos ya cargados."""
-    existing = PayStatement.query.filter_by(pay_period_id=period.id, employee_id=employee.id).first()
-    if existing:
-        PayLine.query.filter_by(pay_statement_id=existing.id).delete(synchronize_session=False)
-        db.session.delete(existing)
+    """Calcula y crea o actualiza PayStatement usando turnos ya cargados."""
+    st = PayStatement.query.filter_by(pay_period_id=period.id, employee_id=employee.id).first()
+    if not st:
+        st = PayStatement(
+            pay_period_id=period.id,
+            employee_id=employee.id,
+            reconciliation_status=ReconciliationStatus.PENDIENTE.value
+        )
+        db.session.add(st)
         db.session.flush()
+    else:
+        # Si ya está pagado, no recalculamos para evitar inconsistencias
+        if st.reconciliation_status == ReconciliationStatus.PAGADO.value:
+            return st
+        # Limpiamos líneas antiguas antes de regenerar
+        PayLine.query.filter_by(pay_statement_id=st.id).delete(synchronize_session=False)
+
     total_base = Decimal("0.00")
     lines_data = []
     for s in shifts:
@@ -48,20 +59,12 @@ def _calculate_statement_from_shifts(period, employee, shifts):
         amount = (hours * rate).quantize(Decimal("0.01"))
         total_base += amount
         lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", hours, rate, amount))
-    st = PayStatement(
-        pay_period_id=period.id,
-        employee_id=employee.id,
-        total_base_hours=sum((l[2] for l in lines_data), Decimal("0.00")),
-        total_overtime_hours=0,
-        total_surcharges=0,
-        total_bonuses=0,
-        total_deductions=0,
-        total_calculated=total_base,
-        reconciliation_status=ReconciliationStatus.PENDIENTE.value,
-        generated_at=datetime.utcnow(),
-    )
-    db.session.add(st)
-    db.session.flush()
+
+    # Actualizamos campos del statement
+    st.total_base_hours = sum((l[2] for l in lines_data), Decimal("0.00"))
+    st.total_calculated = total_base
+    st.generated_at = datetime.utcnow()
+
     for line_type, desc, qty, rate, amt in lines_data:
         db.session.add(PayLine(
             pay_statement_id=st.id,

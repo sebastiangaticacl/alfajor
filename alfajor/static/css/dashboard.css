@@ -1,44 +1,56 @@
 /* Dashboard layout overrides */
 .brand {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: var(--space-6);
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  margin-bottom: 40px;
 }
 
 .brand-mark {
   font-size: var(--text-xl);
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
+  background: linear-gradient(135deg, var(--primary), #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.brand-sub {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-}
-
-.nav {
+.sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  flex: 1;
 }
 
-.nav-link {
-  padding: var(--space-2) var(--space-3);
-  border-radius: 10px;
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-weight: 600;
   font-size: var(--text-sm);
+  transition: all 0.2s ease;
 }
 
-.nav-link:hover,
-.nav-link.active {
-  background: var(--bg-surface-2);
-  color: var(--text-primary);
+.sidebar-link:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.sidebar-link.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
 }
 
 .topbar-heading {
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -108,13 +120,34 @@
   overflow-x: auto;
 }
 
-.text-secondary { color: var(--text-secondary); }
-.text-muted { color: var(--text-secondary); }
-.text-danger { color: var(--danger); }
-.text-sm { font-size: var(--text-sm); }
-.text-xs { font-size: var(--text-xs); }
-.mb-4 { margin-bottom: var(--space-4); }
-.w-full { width: 100%; }
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-sm {
+  font-size: var(--text-sm);
+}
+
+.text-xs {
+  font-size: var(--text-xs);
+}
+
+.mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.w-full {
+  width: 100%;
+}
+
 .flex-between {
   display: flex;
   align-items: center;
@@ -143,11 +176,12 @@
 
 .form-input {
   width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   background: var(--bg-surface-2);
   color: var(--text-primary);
+  font-size: var(--text-sm);
 }
 
 .form-check {
@@ -175,8 +209,8 @@
   gap: var(--space-4);
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   margin-bottom: var(--space-6);
 }
 
@@ -198,15 +232,41 @@
   gap: var(--space-2);
 }
 
-.badge-info { background: rgba(47, 107, 255, 0.15); color: var(--primary); }
-.badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-.badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-.badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.badge-info {
+  background: rgba(47, 107, 255, 0.15);
+  color: var(--primary);
+}
 
-.alert-success { border-left: 3px solid var(--success); }
-.alert-warning { border-left: 3px solid var(--warning); }
-.alert-danger { border-left: 3px solid var(--danger); }
-.alert-info { border-left: 3px solid var(--primary); }
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.alert-success {
+  border-left: 3px solid var(--success);
+}
+
+.alert-warning {
+  border-left: 3px solid var(--warning);
+}
+
+.alert-danger {
+  border-left: 3px solid var(--danger);
+}
+
+.alert-info {
+  border-left: 3px solid var(--primary);
+}
 
 /* Turnos / calendario */
 .filter-bar {

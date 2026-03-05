@@ -105,7 +105,7 @@ def calendar():
     )
 
 
-@bp.route("/week/new", methods=["POST"])
+@bp.route("/semana/nueva", methods=["POST"])
 @login_required
 @encargado_or_admin
 def week_new():
@@ -203,7 +203,7 @@ def shift_new():
     return redirect(url_for("shifts.calendar", week=week.start_date.isoformat()))
 
 
-@bp.route("/shift/<id>/delete", methods=["POST"])
+@bp.route("/turno/<id>/eliminar", methods=["POST"])
 @login_required
 @encargado_or_admin
 def shift_delete(id):
@@ -218,7 +218,7 @@ def shift_delete(id):
     return redirect(url_for("shifts.calendar", week=week_start.isoformat()))
 
 
-@bp.route("/shift/<id>/update", methods=["POST"])
+@bp.route("/turno/<id>/actualizar", methods=["POST"])
 @login_required
 @encargado_or_admin
 def shift_update(id):
@@ -295,7 +295,7 @@ def shift_update(id):
     return redirect(url_for("shifts.calendar", week=target_week.start_date.isoformat()))
 
 
-@bp.route("/shift/create", methods=["POST"])
+@bp.route("/turno/crear", methods=["POST"])
 @login_required
 @encargado_or_admin
 def shift_create():
@@ -338,7 +338,7 @@ def shift_create():
     return {"status": "success", "shift_id": shift.id}
 
 
-@bp.route("/shift/bulk-update", methods=["POST"])
+@bp.route("/turno/actualizacion-masiva", methods=["POST"])
 @login_required
 @encargado_or_admin
 def shift_bulk_update():

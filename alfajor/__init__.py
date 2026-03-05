@@ -63,15 +63,15 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     from alfajor.blueprints.settings import bp as settings_bp
     from alfajor.blueprints.reports import bp as reports_bp
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(shifts_bp)
-    app.register_blueprint(employees_bp)
-    app.register_blueprint(requests_bp)
-    app.register_blueprint(payroll_bp)
-    app.register_blueprint(ranking_bp)
-    app.register_blueprint(settings_bp)
-    app.register_blueprint(reports_bp)
+    app.register_blueprint(auth_bp, url_prefix="/autenticacion")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(shifts_bp, url_prefix="/turnos")
+    app.register_blueprint(employees_bp, url_prefix="/empleados")
+    app.register_blueprint(requests_bp, url_prefix="/solicitudes")
+    app.register_blueprint(payroll_bp, url_prefix="/pagos")
+    app.register_blueprint(ranking_bp, url_prefix="/ranking")
+    app.register_blueprint(settings_bp, url_prefix="/configuracion")
+    app.register_blueprint(reports_bp, url_prefix="/reportes")
 
     # Filtros template para JSON
     import json
@@ -112,6 +112,32 @@ def create_app(config_name: Optional[str] = None) -> Flask:
         formatted = "".join(reversed(parts))
         prefix = f"${formatted}" if n >= 0 else f"-${formatted}"
         return f"{prefix} CLP"
+
+    @app.template_filter("date_esp")
+    def date_esp_filter(dt, fmt):
+        """Formatea fecha en español reemplazando nombres de días y meses."""
+        if not dt:
+            return ""
+        
+        DAYS_ES = {
+            'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves',
+            'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo',
+            'Mon': 'Lun', 'Tue': 'Mar', 'Wed': 'Mié', 'Thu': 'Jue', 'Fri': 'Vie', 'Sat': 'Sáb', 'Sun': 'Dom'
+        }
+        MONTHS_ES = {
+            'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 'April': 'Abril',
+            'May': 'Mayo', 'June': 'Junio', 'July': 'Julio', 'August': 'Agosto',
+            'September': 'Septiembre', 'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre',
+            'Jan': 'Ene', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Abr', 'May': 'May', 'Jun': 'Jun',
+            'Jul': 'Jul', 'Aug': 'Ago', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Dic'
+        }
+        
+        res = dt.strftime(fmt)
+        for eng, esp in DAYS_ES.items():
+            res = res.replace(eng, esp)
+        for eng, esp in MONTHS_ES.items():
+            res = res.replace(eng, esp)
+        return res
 
     # Ruta raíz → dashboard o login
     @app.route("/")

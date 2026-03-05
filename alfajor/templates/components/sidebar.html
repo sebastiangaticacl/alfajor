@@ -1,35 +1,92 @@
 {% set current = request.endpoint or '' %}
 <aside class="sidebar" role="navigation">
   <div class="sidebar-header">
-    <img src="{{ url_for('static', filename='img/logo-cosas-ricas.png') }}" alt="Cosas Ricas" class="sidebar-logo-img">
-    <span class="sidebar-logo">ALFAJOR</span>
+    <div class="brand">
+      <span class="brand-mark">ALFAJOR</span>
+    </div>
   </div>
   <nav class="sidebar-nav">
-    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link{% if current == 'admin.dashboard' %} active{% endif %}"{% if current == 'admin.dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+    <a href="{{ url_for('admin.dashboard') }}"
+      class="sidebar-link{% if current == 'admin.dashboard' %} active{% endif %}" {% if current=='admin.dashboard' %}
+      aria-current="page" {% endif %}>
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span>Dashboard</span>
+    </a>
     {% if current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
-    <a href="{{ url_for('shifts.calendar') }}" class="sidebar-link{% if current.startswith('shifts.') %} active{% endif %}"{% if current.startswith('shifts.') %} aria-current="page"{% endif %}>Turnos</a>
+    <a href="{{ url_for('shifts.calendar') }}"
+      class="sidebar-link{% if current.startswith('shifts.') %} active{% endif %}" {% if current.startswith('shifts.')
+      %} aria-current="page" {% endif %}>
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span>Turnos</span>
+    </a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
-    <a href="{{ url_for('employees.list') }}" class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}"{% if current.startswith('employees.') %} aria-current="page"{% endif %}>Personas</a>
+    <a href="{{ url_for('employees.list') }}"
+      class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}" {% if
+      current.startswith('employees.') %} aria-current="page" {% endif %}>
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span>Personas</span>
+    </a>
     {% elif current_user.role == 'TRABAJADOR' and current_user.employee %}
-    <a href="{{ url_for('employees.detail', id=current_user.employee.id) }}" class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}"{% if current.startswith('employees.') %} aria-current="page"{% endif %}>Mi perfil</a>
+    <a href="{{ url_for('employees.list') }}"
+      class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}" {% if
+      current.startswith('employees.') %} aria-current="page" {% endif %}>
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span>Mi perfil</span>
+    </a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
-    <a href="{{ url_for('requests.list') }}" class="sidebar-link{% if current.startswith('requests.') %} active{% endif %}"{% if current.startswith('requests.') %} aria-current="page"{% endif %}>Solicitudes</a>
+    <a href="{{ url_for('requests.list') }}"
+      class="sidebar-link{% if current.startswith('requests.') %} active{% endif %}" {% if
+      current.startswith('requests.') %} aria-current="page" {% endif %}>
+      <i data-lucide="clock" class="w-5 h-5"></i>
+      <span>Solicitudes</span>
+    </a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
-    <a href="{{ url_for('payroll.periods') }}" class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}"{% if current.startswith('payroll.') %} aria-current="page"{% endif %}>Pagos</a>
+    <a href="{{ url_for('payroll.periods') }}"
+      class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}" {% if current.startswith('payroll.')
+      %} aria-current="page" {% endif %}>
+      <i data-lucide="banknote" class="w-5 h-5"></i>
+      <span>Pagos</span>
+    </a>
     {% elif current_user.role == 'TRABAJADOR' %}
-    <a href="{{ url_for('payroll.my_statements') }}" class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}"{% if current.startswith('payroll.') %} aria-current="page"{% endif %}>Mis liquidaciones</a>
+    <a href="{{ url_for('payroll.my_statements') }}"
+      class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}" {% if current.startswith('payroll.')
+      %} aria-current="page" {% endif %}>
+      <i data-lucide="file-text" class="w-5 h-5"></i>
+      <span>Mis liquidaciones</span>
+    </a>
     {% endif %}
     {% if current_user.role == 'TRABAJADOR' %}
-    <a href="{{ url_for('ranking.my_score') }}" class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}"{% if current.startswith('ranking.') %} aria-current="page"{% endif %}>Mi score</a>
+    <a href="{{ url_for('ranking.my_score') }}"
+      class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}" {% if current.startswith('ranking.')
+      %} aria-current="page" {% endif %}>
+      <i data-lucide="trending-up" class="w-5 h-5"></i>
+      <span>Mi score</span>
+    </a>
     {% else %}
-    <a href="{{ url_for('ranking.index') }}" class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}"{% if current.startswith('ranking.') %} aria-current="page"{% endif %}>Ranking</a>
+    <a href="{{ url_for('ranking.index') }}"
+      class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}" {% if current.startswith('ranking.')
+      %} aria-current="page" {% endif %}>
+      <i data-lucide="award" class="w-5 h-5"></i>
+      <span>Ranking</span>
+    </a>
     {% endif %}
-    {% if current_user.role == 'ADMIN' %}
-    <a href="{{ url_for('admin.users') }}" class="sidebar-link{% if current.startswith('admin.user') or current == 'admin.users' %} active{% endif %}"{% if current.startswith('admin.user') or current == 'admin.users' %} aria-current="page"{% endif %}>Usuarios</a>
-    <a href="{{ url_for('settings.index') }}" class="sidebar-link{% if current.startswith('settings.') %} active{% endif %}"{% if current.startswith('settings.') %} aria-current="page"{% endif %}>Configuración</a>
-    {% endif %}
+
+    <div class="mt-auto pt-6 border-t border-slate-800">
+      {% if current_user.role == 'ADMIN' %}
+      <a href="{{ url_for('admin.users') }}"
+        class="sidebar-link{% if current.startswith('admin.user') or current == 'admin.users' %} active{% endif %}">
+        <i data-lucide="shield-check" class="w-5 h-5"></i>
+        <span>Usuarios</span>
+      </a>
+      <a href="{{ url_for('settings.index') }}"
+        class="sidebar-link{% if current.startswith('settings.') %} active{% endif %}">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span>Configuración</span>
+      </a>
+      {% endif %}
+    </div>
   </nav>
 </aside>

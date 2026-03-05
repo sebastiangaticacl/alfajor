@@ -36,7 +36,7 @@ def list():
     )
 
 
-@bp.route("/new", methods=["GET", "POST"])
+@bp.route("/nueva", methods=["GET", "POST"])
 @login_required
 def new():
     if not current_user.employee_id:
@@ -64,7 +64,7 @@ def new():
     return render_template("requests/form.html", request_obj=None)
 
 
-@bp.route("/<id>/approve", methods=["POST"])
+@bp.route("/<id>/aprobar", methods=["POST"])
 @login_required
 @encargado_or_admin
 def approve(id):
@@ -78,7 +78,7 @@ def approve(id):
     return redirect(url_for("requests.list"))
 
 
-@bp.route("/<id>/reject", methods=["POST"])
+@bp.route("/<id>/rechazar", methods=["POST"])
 @login_required
 @encargado_or_admin
 def reject(id):
