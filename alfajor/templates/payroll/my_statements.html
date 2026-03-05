@@ -1,40 +1,78 @@
 {% extends "base.html" %}
 {% block title %}Mis liquidaciones · ALFAJOR{% endblock %}
 
-{% block content %}
-<h1 class="page-title">Mis liquidaciones</h1>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table">
-    <thead>
-      <tr><th>Periodo</th><th>Total (CLP)</th><th>Estado</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for st in statements %}
-      <tr>
-        <td>{{ st.pay_period.name }}</td>
-        <td>{{ st.total_calculated|clp }}</td>
-        <td><span class="badge badge-{{ 'info' if st.reconciliation_status == 'PENDIENTE' else 'success' }}">{{ st.reconciliation_status }}</span></td>
-        <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4" class="text-muted">Sin liquidaciones.</td></tr>
-      {% endfor %}
-    </tbody>
-    </table>
-  </div>
-</div>
+{% block page_title %}
+<h1 class="topbar-heading">Mis liquidaciones</h1>
+{% endblock %}
+{% block page_subtitle %}Historial de liquidaciones{% endblock %}
 
-{% if total and total > per_page %}
-{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
-<div class="pagination">
-  {% if page > 1 %}
-  <a href="{{ url_for('payroll.my_statements', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+{% block content %}
+<section class="stack">
+  <div class="page-header-row">
+    <div class="page-header-title">
+      <h2 class="page-title">Mis liquidaciones</h2>
+      <p class="small muted">Historial de liquidaciones</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Liquidaciones</div>
+    <div class="card-body">
+      {% if statements and statements|length > 0 %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th>Total (CLP)</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in statements %}
+            <tr>
+              <td>{{ st.pay_period.name }}</td>
+              <td>{{ st.total_calculated|clp }}</td>
+              <td>
+                {% if st.reconciliation_status == 'PAGADO' %}
+                <span class="badge success">{{ st.reconciliation_status }}</span>
+                {% elif st.reconciliation_status == 'PARCIAL' %}
+                <span class="badge warning">{{ st.reconciliation_status }}</span>
+                {% elif st.reconciliation_status == 'DIFERENCIA' %}
+                <span class="badge danger">{{ st.reconciliation_status }}</span>
+                {% else %}
+                <span class="badge neutral">{{ st.reconciliation_status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Ver</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <h3 class="empty-state__title">No hay liquidaciones</h3>
+        <p class="small muted empty-state__text">Tus liquidaciones aparecerán aquí cuando se generen.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if total and total > per_page %}
+  {% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+  <div class="toolbar pagination-bar">
+    {% if page > 1 %}
+    <a href="{{ url_for('payroll.my_statements', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+    {% endif %}
+    <span class="small muted">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('payroll.my_statements', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+    {% endif %}
+  </div>
   {% endif %}
-  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
-  {% if page < total_pages %}
-  <a href="{{ url_for('payroll.my_statements', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
-  {% endif %}
-</div>
-{% endif %}
+</section>
 {% endblock %}
