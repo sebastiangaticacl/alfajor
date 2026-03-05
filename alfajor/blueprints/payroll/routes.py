@@ -106,6 +106,7 @@ def period_detail(id):
 @contabilidad_or_admin
 def period_generate(id):
     created = generate_statements_for_period(id)
+    db.session.commit()
     flash(f"Generadas {len(created)} liquidaciones.", "success")
     return redirect(url_for("payroll.period_detail", id=id))
 

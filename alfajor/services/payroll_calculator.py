@@ -1,10 +1,11 @@
 """Cálculo de liquidaciones."""
 
 from datetime import datetime
+from decimal import Decimal
 from alfajor.extensions import db
 from alfajor.models import Shift, PayStatement, PayLine, Employee, PayPeriod
 from alfajor.enums import ShiftStatus, PayLineType, ReconciliationStatus
-from alfajor.services.settings_service import get_setting
+from alfajor.utils.timecalc import shift_hours
 
 
 def generate_statements_for_period(period_id):
@@ -39,22 +40,23 @@ def _calculate_statement_from_shifts(period, employee, shifts):
         PayLine.query.filter_by(pay_statement_id=existing.id).delete(synchronize_session=False)
         db.session.delete(existing)
         db.session.flush()
-    total_base = 0
+    total_base = Decimal("0.00")
     lines_data = []
     for s in shifts:
-        hours = (s.end_time.hour * 60 + s.end_time.minute - s.start_time.hour * 60 - s.start_time.minute) / 60
-        amount = int(round(hours * float(employee.hourly_rate), 0))
+        hours = shift_hours(s.start_time, s.end_time)
+        rate = Decimal(str(employee.hourly_rate))
+        amount = (hours * rate).quantize(Decimal("0.01"))
         total_base += amount
-        lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", int(round(hours, 0)), int(employee.hourly_rate), amount))
+        lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", hours, rate, amount))
     st = PayStatement(
         pay_period_id=period.id,
         employee_id=employee.id,
-        total_base_hours=sum(l[2] for l in lines_data),
+        total_base_hours=sum((l[2] for l in lines_data), Decimal("0.00")),
         total_overtime_hours=0,
         total_surcharges=0,
         total_bonuses=0,
         total_deductions=0,
-        total_calculated=int(total_base),
+        total_calculated=total_base,
         reconciliation_status=ReconciliationStatus.PENDIENTE.value,
         generated_at=datetime.utcnow(),
     )
@@ -69,5 +71,4 @@ def _calculate_statement_from_shifts(period, employee, shifts):
             unit_rate=rate,
             amount=amt,
         ))
-    db.session.commit()
     return st
