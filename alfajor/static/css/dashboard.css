@@ -82,6 +82,27 @@
   margin-bottom: var(--space-6);
 }
 
+.dashboard-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.dashboard-actions {
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.dashboard-panels {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .dashboard-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;

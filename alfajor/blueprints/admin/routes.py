@@ -31,6 +31,11 @@ def dashboard():
     recent_weeks = ScheduleWeek.query.options(selectinload(ScheduleWeek.branch)).order_by(
         ScheduleWeek.start_date.desc()
     ).limit(5).all()
+    upcoming_shifts = Shift.query.options(selectinload(Shift.employee)).filter(
+        Shift.date >= today,
+        Shift.date <= today + timedelta(days=7),
+        Shift.status != "ANULADO"
+    ).order_by(Shift.date, Shift.start_time).limit(8).all()
     return render_template(
         "admin/dashboard.html",
         total_today=total_today,
@@ -41,6 +46,7 @@ def dashboard():
         closed_weeks=closed_weeks,
         periods=periods,
         pending_requests=pending_requests,
+        upcoming_shifts=upcoming_shifts,
     )
 
 

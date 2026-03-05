@@ -5,108 +5,94 @@
 {% set total_weeks = draft_weeks + published_weeks + closed_weeks %}
 {% set coverage = ((covered_today * 100) // total_today) if total_today > 0 else 0 %}
 
-<div class="dashboard-header">
-  <div>
-    <h1 class="page-title">Dashboard</h1>
-    <p class="page-subtitle">Resumen operativo y salud del sistema.</p>
+<div class="stack">
+  <div class="grid dashboard-kpis">
+    <div class="card kpi">
+      <span class="pill">Turnos hoy</span>
+      <div class="kpi-value">{{ covered_today }} / {{ total_today }}</div>
+      <span class="text-secondary">{{ total_today - covered_today }} pendientes · {{ coverage }}%</span>
+    </div>
+    <div class="card kpi">
+      <span class="pill">Semanas</span>
+      <div class="kpi-value">{{ total_weeks }}</div>
+      <span class="text-secondary">{{ published_weeks }} publicadas · {{ draft_weeks }} borradores</span>
+    </div>
+    <div class="card kpi">
+      <span class="pill">Pagos pendientes</span>
+      <div class="kpi-value">{{ periods|length }}</div>
+      <span class="text-secondary">Abiertos o en revisión</span>
+    </div>
+    <div class="card kpi">
+      <span class="pill">Alertas</span>
+      <div class="kpi-value">{{ pending_requests }}</div>
+      <span class="text-secondary">Solicitudes pendientes</span>
+    </div>
   </div>
-  <div class="dashboard-header-actions">
-    <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
-    <a href="{{ url_for('payroll.period_new') }}" class="btn btn-secondary">Nuevo periodo de pago</a>
-  </div>
-</div>
 
-<div class="dashboard-stats">
-  <div class="card stat-card">
-    <div class="stat-icon stat-icon-primary">📅</div>
-    <div class="stat-content">
-      <p class="stat-label">Turnos de hoy</p>
-      <p class="stat-value">{{ covered_today }} / {{ total_today }}</p>
-      <p class="stat-meta">{{ total_today - covered_today }} pendientes · {{ coverage }}% cubiertos</p>
-      <div class="stat-progress">
-        <span style="width: {{ coverage }}%"></span>
+  <div class="card">
+    <div class="grid dashboard-actions">
+      <div class="stack">
+        <h3>Acciones rápidas</h3>
+        <span class="text-secondary">Atajos para gestión diaria.</span>
+      </div>
+      <div class="stack">
+        <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
+        <a href="{{ url_for('payroll.period_new') }}" class="btn btn-secondary">Nuevo periodo</a>
+      </div>
+      <div class="stack">
+        <a href="{{ url_for('requests.list') }}" class="btn btn-secondary">Solicitudes</a>
+        <a href="{{ url_for('employees.list') }}" class="btn btn-secondary">Personas</a>
       </div>
     </div>
-    <a href="{{ url_for('shifts.calendar') }}" class="stat-link">Ver calendario →</a>
   </div>
 
-  <div class="card stat-card">
-    <div class="stat-icon stat-icon-success">🗓️</div>
-    <div class="stat-content">
-      <p class="stat-label">Semanas</p>
-      <p class="stat-value">{{ total_weeks }}</p>
-      <p class="stat-meta">{{ published_weeks }} publicadas · {{ draft_weeks }} borradores</p>
-    </div>
-    <a href="{{ url_for('shifts.calendar') }}" class="stat-link">Gestionar →</a>
-  </div>
-
-  <div class="card stat-card">
-    <div class="stat-icon stat-icon-warning">💸</div>
-    <div class="stat-content">
-      <p class="stat-label">Pagos</p>
-      <p class="stat-value">{{ periods|length }}</p>
-      <p class="stat-meta">Periodos abiertos o en revisión</p>
-    </div>
-    <a href="{{ url_for('payroll.periods') }}" class="stat-link">Ver pagos →</a>
-  </div>
-
-  <div class="card stat-card">
-    <div class="stat-icon stat-icon-danger">📝</div>
-    <div class="stat-content">
-      <p class="stat-label">Solicitudes</p>
-      <p class="stat-value">{{ pending_requests }}</p>
-      <p class="stat-meta">Pendientes de revisión</p>
-    </div>
-    {% if pending_requests > 0 %}
-    <a href="{{ url_for('requests.list') }}" class="stat-link">Revisar →</a>
-    {% else %}
-    <a href="{{ url_for('requests.list') }}" class="stat-link">Ver todas →</a>
-    {% endif %}
-  </div>
-</div>
-
-<div class="dashboard-grid">
-  <div class="card dashboard-panel">
-    <div class="panel-header">
-      <div>
-        <h3 class="panel-title">Acciones rápidas</h3>
-        <p class="panel-subtitle text-muted">Atajos para gestión diaria.</p>
-      </div>
-      <span class="badge badge-info">Admin</span>
-    </div>
-    <div class="panel-actions">
-      <a href="{{ url_for('requests.list') }}" class="btn btn-secondary btn-sm">Solicitudes</a>
-      {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
-      <a href="{{ url_for('employees.list') }}" class="btn btn-secondary btn-sm">Personas</a>
-      {% endif %}
-      {% if current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
-      <a href="{{ url_for('payroll.transaction_new') }}" class="btn btn-secondary btn-sm">Registrar pago</a>
-      {% endif %}
-      {% if current_user.role == 'ADMIN' %}
-      <a href="{{ url_for('admin.users') }}" class="btn btn-secondary btn-sm">Usuarios</a>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card dashboard-panel">
-    <div class="panel-header">
-      <div>
-        <h3 class="panel-title">Resumen semanal</h3>
-        <p class="panel-subtitle text-muted">Últimas 5 semanas creadas.</p>
+  <div class="grid dashboard-panels">
+    <div class="card">
+      <h3>Alertas</h3>
+      <div class="stack">
+        {% if pending_requests > 0 %}
+        <div class="alert">Hay {{ pending_requests }} solicitudes pendientes.</div>
+        {% endif %}
+        {% if periods|length > 0 %}
+        <div class="alert">Existen {{ periods|length }} periodos de pago abiertos.</div>
+        {% endif %}
+        {% if draft_weeks > 0 %}
+        <div class="alert">Hay {{ draft_weeks }} semanas en borrador.</div>
+        {% endif %}
+        {% if pending_requests == 0 and periods|length == 0 and draft_weeks == 0 %}
+        <div class="alert">Sin alertas críticas.</div>
+        {% endif %}
       </div>
     </div>
-    <div class="panel-list">
-      {% for w in recent_weeks %}
-      <div class="panel-item">
-        <div>
-          <p class="panel-item-title">{{ w.start_date.strftime('%d/%m') }} – {{ w.end_date.strftime('%d/%m') }}</p>
-          <p class="panel-item-meta text-muted">{{ w.branch.name if w.branch else 'Sin sucursal' }}</p>
-        </div>
-        <span class="badge badge-{{ 'info' if w.status == 'BORRADOR' else 'success' if w.status == 'PUBLICADA' else 'warning' }}">{{ w.status }}</span>
+
+    <div class="card">
+      <h3>Próximos turnos</h3>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Empleado</th>
+              <th>Rol</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in upcoming_shifts %}
+            <tr>
+              <td>{{ s.date.strftime('%d/%m') }}</td>
+              <td>{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</td>
+              <td>{{ s.employee.full_name }}</td>
+              <td>{{ s.shift_role }}</td>
+              <td><span class="badge">{{ s.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-secondary">Sin turnos próximos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      {% else %}
-      <p class="text-muted">Sin semanas recientes.</p>
-      {% endfor %}
     </div>
   </div>
 </div>
