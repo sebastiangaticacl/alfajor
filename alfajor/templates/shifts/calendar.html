@@ -14,7 +14,7 @@
 
 {% if not week %}
 <div class="card schedule-card">
-  <p class="text-muted">No hay semana creada. Crea una para comenzar a asignar turnos.</p>
+  <p class="text-muted">Semana no creada (crear semana).</p>
 </div>
 {% endif %}
 
@@ -129,7 +129,7 @@
       <div class="schedule-row schedule-row--branch">
         <div class="schedule-cell schedule-cell--branch">
           <span class="branch-name">{{ group.branch.name if group.branch else 'Sin sucursal' }}</span>
-          <span class="branch-total">{{ branch_totals.get(group.branch.id|string if group.branch else '', 0) }}h</span>
+          <span class="branch-total">{{ '%.2f'|format(branch_totals.get(group.branch.id|string if group.branch else '', 0)) }}h</span>
         </div>
       </div>
         {% for e in group.employees %}
@@ -164,7 +164,7 @@
           </div>
           {% endfor %}
           <div class="schedule-cell schedule-cell--total">
-            {{ employee_hours.get(e.id|string, 0) }}h
+        {{ '%.2f'|format(employee_hours.get(e.id|string, 0)) }}h
           </div>
         </div>
         {% endfor %}
@@ -175,11 +175,11 @@
         {% for day in week_days %}
         {% set day_key = day.isoformat() %}
         <div class="schedule-cell schedule-cell--total{% if day.weekday() >= 5 %} is-weekend{% endif %}">
-          {{ day_totals.get(day_key, 0) }}h
+          {{ '%.2f'|format(day_totals.get(day_key, 0)) }}h
         </div>
         {% endfor %}
         <div class="schedule-cell schedule-cell--total">
-          {{ segment_totals.M + segment_totals.T + segment_totals.N }}h
+          {{ '%.2f'|format(segment_totals.M + segment_totals.T + segment_totals.N) }}h
         </div>
       </div>
     </div>
@@ -190,19 +190,19 @@
     <div class="summary-metrics">
       <div class="summary-item">
         <span>Total semana</span>
-        <strong>{{ segment_totals.M + segment_totals.T + segment_totals.N }}h</strong>
+        <strong>{{ '%.2f'|format(segment_totals.M + segment_totals.T + segment_totals.N) }}h</strong>
       </div>
       <div class="summary-item">
         <span>Mañana</span>
-        <strong>{{ segment_totals.M }}h</strong>
+        <strong>{{ '%.2f'|format(segment_totals.M) }}h</strong>
       </div>
       <div class="summary-item">
         <span>Tarde</span>
-        <strong>{{ segment_totals.T }}h</strong>
+        <strong>{{ '%.2f'|format(segment_totals.T) }}h</strong>
       </div>
       <div class="summary-item">
         <span>Noche</span>
-        <strong>{{ segment_totals.N }}h</strong>
+        <strong>{{ '%.2f'|format(segment_totals.N) }}h</strong>
       </div>
     </div>
 
@@ -222,10 +222,10 @@
           {% set day_key = day.isoformat() %}
           <tr>
             <td>{{ day.strftime('%a %d') }}</td>
-            <td>{{ day_segments.get(day_key, {}).M }}</td>
-            <td>{{ day_segments.get(day_key, {}).T }}</td>
-            <td>{{ day_segments.get(day_key, {}).N }}</td>
-            <td><strong>{{ day_totals.get(day_key, 0) }}</strong></td>
+            <td>{{ '%.2f'|format(day_segments.get(day_key, {}).M) }}</td>
+            <td>{{ '%.2f'|format(day_segments.get(day_key, {}).T) }}</td>
+            <td>{{ '%.2f'|format(day_segments.get(day_key, {}).N) }}</td>
+            <td><strong>{{ '%.2f'|format(day_totals.get(day_key, 0)) }}</strong></td>
           </tr>
           {% endfor %}
         </tbody>

@@ -9,8 +9,10 @@ from alfajor.extensions import db
 from alfajor.models import ScheduleWeek, Shift, Employee, Branch
 from sqlalchemy.orm import selectinload
 from alfajor.enums import WeekStatus, ShiftStatus
+from decimal import Decimal
 from alfajor.services.shift_validator import validate_shift
 from alfajor.services.settings_service import get_setting
+from alfajor.utils.timecalc import shift_hours
 
 
 @bp.route("/")
@@ -33,7 +35,7 @@ def calendar():
     shifts = Shift.query.options(selectinload(Shift.employee)).filter(
         Shift.date >= monday,
         Shift.date <= sunday
-    ).order_by(Shift.date, Shift.start_time).all() if week else []
+    ).order_by(Shift.date, Shift.start_time).all()
     if current_user.role in ("ADMIN", "ENCARGADO"):
         employees = Employee.query.filter_by(status="ACTIVO").order_by(Employee.last_name).all()
     else:
@@ -43,9 +45,12 @@ def calendar():
     schedule_map = {}
     employee_hours = {}
     branch_totals = {}
-    day_totals = {d.isoformat(): 0 for d in week_days}
-    day_segments = {d.isoformat(): {"M": 0, "T": 0, "N": 0} for d in week_days}
-    segment_totals = {"M": 0, "T": 0, "N": 0}
+    day_totals = {d.isoformat(): Decimal("0.00") for d in week_days}
+    day_segments = {
+        d.isoformat(): {"M": Decimal("0.00"), "T": Decimal("0.00"), "N": Decimal("0.00")}
+        for d in week_days
+    }
+    segment_totals = {"M": Decimal("0.00"), "T": Decimal("0.00"), "N": Decimal("0.00")}
 
     def get_segment(start_t):
         hour = start_t.hour
@@ -58,15 +63,14 @@ def calendar():
         emp_map = schedule_map.setdefault(str(s.employee_id), {})
         day_key = s.date.isoformat()
         emp_map.setdefault(day_key, []).append(s)
-        duration = (s.end_time.hour * 60 + s.end_time.minute - s.start_time.hour * 60 - s.start_time.minute) / 60
-        hours = int(round(duration, 0))
-        employee_hours[str(s.employee_id)] = employee_hours.get(str(s.employee_id), 0) + hours
+        hours = shift_hours(s.start_time, s.end_time)
+        employee_hours[str(s.employee_id)] = employee_hours.get(str(s.employee_id), Decimal("0.00")) + hours
         day_totals[day_key] += hours
         seg = get_segment(s.start_time)
         day_segments[day_key][seg] += hours
         segment_totals[seg] += hours
         branch_id = str(s.branch_id or (s.employee.branch_id if s.employee else ""))
-        branch_totals[branch_id] = branch_totals.get(branch_id, 0) + hours
+        branch_totals[branch_id] = branch_totals.get(branch_id, Decimal("0.00")) + hours
 
     shift_roles = get_setting("shift_roles", ["caja", "barra", "cocina", "runner"])
     branch_groups = {}
