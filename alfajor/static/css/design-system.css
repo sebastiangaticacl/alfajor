@@ -14,9 +14,11 @@
   --radius: 12px;
   --primary: #2f6bff;
   --primary-2: #1c4ed8;
+  --text-on-primary: #ffffff;
   --danger: #ef4444;
   --warning: #f59e0b;
   --success: #10b981;
+  --overlay: rgba(5, 10, 20, 0.55);
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
@@ -66,6 +68,7 @@ html[data-theme="light"] {
   --text-secondary: #475569;
   --border-color: #e2e8f0;
   --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --overlay: rgba(15, 23, 42, 0.2);
 }
 
 *,
@@ -84,6 +87,34 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  z-index: 50;
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 h1, h2, h3, h4 {
   margin: 0 0 var(--space-2);
   font-weight: 700;
@@ -96,6 +127,11 @@ a {
 
 a:hover {
   color: var(--primary-2);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Layout */
@@ -205,9 +241,15 @@ a:hover {
   font-weight: 600;
 }
 
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
 }
 
 .btn-primary:hover {
