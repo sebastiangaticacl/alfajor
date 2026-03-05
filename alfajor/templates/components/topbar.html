@@ -9,50 +9,12 @@
   <nav class="topbar-nav">
     {% if current_user.is_authenticated %}
     <span class="topbar-user">{{ current_user.email }}</span>
-    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Salir</a>
+    <form action="{{ url_for('auth.logout') }}" method="post" class="topbar-logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-secondary">Salir</button>
+    </form>
     {% else %}
     <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Entrar</a>
     {% endif %}
   </nav>
 </header>
-
-<style>
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--topbar-height);
-  padding: 0 var(--space-6);
-  background: var(--color-bg-secondary);
-  border-bottom: 3px solid var(--color-brand-red);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.topbar-brand { display: flex; align-items: center; gap: var(--space-4); }
-.topbar-logo-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  text-decoration: none !important;
-}
-.topbar-logo-img {
-  height: 42px;
-  width: auto;
-  object-fit: contain;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-}
-.topbar-system-name {
-  font-size: var(--text-xl);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-}
-.topbar-logo-link:hover .topbar-system-name { color: var(--color-accent); }
-.topbar-subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-}
-.topbar-nav { display: flex; align-items: center; gap: var(--space-4); }
-.topbar-user { font-size: var(--text-sm); color: var(--color-text-secondary); }
-</style>

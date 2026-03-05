@@ -10,37 +10,35 @@ from alfajor.services.settings_service import get_setting
 def generate_statements_for_period(period_id):
     """Genera PayStatements para todos los empleados con turnos COMPLETADO en el periodo."""
     period = PayPeriod.query.get_or_404(period_id)
-    employees_with_shifts = db.session.query(Shift.employee_id).filter(
+    shifts = Shift.query.filter(
         Shift.date >= period.start_date,
         Shift.date <= period.end_date,
         Shift.status == ShiftStatus.COMPLETADO.value
-    ).distinct().all()
+    ).all()
+    if not shifts:
+        return []
+    employees = {e.id: e for e in Employee.query.filter(Employee.id.in_({s.employee_id for s in shifts})).all()}
+    shifts_by_employee = {}
+    for s in shifts:
+        shifts_by_employee.setdefault(s.employee_id, []).append(s)
     created = []
-    for (emp_id,) in employees_with_shifts:
-        st = _calculate_statement(period_id, emp_id)
+    for emp_id, emp_shifts in shifts_by_employee.items():
+        employee = employees.get(emp_id)
+        if not employee:
+            continue
+        st = _calculate_statement_from_shifts(period, employee, emp_shifts)
         if st:
             created.append(st)
     return created
 
 
-def _calculate_statement(period_id, employee_id):
-    """Calcula y crea/actualiza PayStatement para un empleado en un periodo."""
-    period = PayPeriod.query.get(period_id)
-    employee = Employee.query.get(employee_id)
-    if not period or not employee:
-        return None
-    existing = PayStatement.query.filter_by(pay_period_id=period_id, employee_id=employee_id).first()
+def _calculate_statement_from_shifts(period, employee, shifts):
+    """Calcula y crea PayStatement usando turnos ya cargados."""
+    existing = PayStatement.query.filter_by(pay_period_id=period.id, employee_id=employee.id).first()
     if existing:
-        for line in existing.lines:
-            db.session.delete(line)
+        PayLine.query.filter_by(pay_statement_id=existing.id).delete(synchronize_session=False)
         db.session.delete(existing)
         db.session.flush()
-    shifts = Shift.query.filter(
-        Shift.employee_id == employee_id,
-        Shift.date >= period.start_date,
-        Shift.date <= period.end_date,
-        Shift.status == ShiftStatus.COMPLETADO.value
-    ).all()
     total_base = 0
     lines_data = []
     for s in shifts:
@@ -49,8 +47,8 @@ def _calculate_statement(period_id, employee_id):
         total_base += amount
         lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", int(round(hours, 0)), int(employee.hourly_rate), amount))
     st = PayStatement(
-        pay_period_id=period_id,
-        employee_id=employee_id,
+        pay_period_id=period.id,
+        employee_id=employee.id,
         total_base_hours=sum(l[2] for l in lines_data),
         total_overtime_hours=0,
         total_surcharges=0,

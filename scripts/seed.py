@@ -23,6 +23,9 @@ from alfajor.enums import UserRole, WeekStatus, ShiftStatus, PayPeriodStatus, Pa
 def seed():
     app = create_app()
     with app.app_context():
+        if app.config.get("ENV") != "development":
+            print("Seed solo permitido en desarrollo.")
+            return
         existing_admin = User.query.filter_by(email="admin").first()
         if existing_admin:
             print("Seed ya ejecutado. Saltando.")

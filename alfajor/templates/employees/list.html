@@ -10,7 +10,8 @@
 {% endif %}
 
 <div class="card">
-  <table class="table">
+  <div class="table-responsive">
+    <table class="table">
     <thead>
       <tr>
         <th>Nombre</th>
@@ -32,6 +33,7 @@
           {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
           <a href="{{ url_for('employees.edit', id=e.id) }}" class="btn btn-secondary btn-sm">Editar</a>
           <form action="{{ url_for('employees.delete', id=e.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar empleado?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
           </form>
           {% endif %}
@@ -39,6 +41,20 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
+
+{% if total and total > per_page %}
+{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="{{ url_for('employees.list', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  {% endif %}
+  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="{{ url_for('employees.list', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

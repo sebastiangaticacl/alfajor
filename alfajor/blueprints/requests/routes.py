@@ -6,6 +6,7 @@ from alfajor.utils.decorators import encargado_or_admin
 from alfajor.blueprints.requests import bp
 from alfajor.extensions import db
 from alfajor.models import ShiftRequest, Shift, Employee
+from sqlalchemy.orm import selectinload
 from alfajor.enums import RequestType, RequestStatus
 from datetime import datetime
 
@@ -13,11 +14,26 @@ from datetime import datetime
 @bp.route("/")
 @login_required
 def list():
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    base_query = ShiftRequest.query.options(selectinload(ShiftRequest.employee)).order_by(
+        ShiftRequest.created_at.desc()
+    )
     if current_user.role in ("ADMIN", "ENCARGADO"):
-        requests = ShiftRequest.query.order_by(ShiftRequest.created_at.desc()).all()
+        query = base_query
     else:
-        requests = ShiftRequest.query.filter_by(employee_id=current_user.employee_id).order_by(ShiftRequest.created_at.desc()).all() if current_user.employee_id else []
-    return render_template("requests/list.html", requests=requests)
+        query = base_query.filter_by(employee_id=current_user.employee_id) if current_user.employee_id else None
+    if not query:
+        return render_template("requests/list.html", requests=[], page=page, per_page=per_page, total=0)
+    total = query.count()
+    requests_list = query.limit(per_page).offset((page - 1) * per_page).all()
+    return render_template(
+        "requests/list.html",
+        requests=requests_list,
+        page=page,
+        per_page=per_page,
+        total=total,
+    )
 
 
 @bp.route("/new", methods=["GET", "POST"])

@@ -8,6 +8,44 @@ from alfajor.extensions import db
 from alfajor.models import Setting, Branch
 from alfajor.services.settings_service import get_setting, set_setting
 
+SETTING_SCHEMA = {
+    "rules.max_weekly_hours": {"type": int, "min": 0, "max": 200},
+    "rules.min_rest_hours": {"type": int, "min": 0, "max": 24},
+    "rules.max_consecutive_days": {"type": int, "min": 0, "max": 31},
+    "rules.overtime_threshold_hours": {"type": int, "min": 0, "max": 24},
+    "rules.overtime_multiplier": {"type": int, "min": 1, "max": 10},
+    "shift_roles": {"type": list},
+    "schedule.hours": {"type": dict},
+}
+
+
+def _parse_setting_value(key, val):
+    import json
+    if key in SETTING_SCHEMA:
+        schema = SETTING_SCHEMA[key]
+        expected_type = schema["type"]
+        if expected_type in (dict, list):
+            value = json.loads(val)
+            if not isinstance(value, expected_type):
+                raise ValueError(f"Formato inválido para {key}")
+            return value
+        if expected_type is int:
+            if not val.lstrip("-").isdigit():
+                raise ValueError(f"{key} debe ser un entero")
+            value = int(val)
+            min_v = schema.get("min")
+            max_v = schema.get("max")
+            if min_v is not None and value < min_v:
+                raise ValueError(f"{key} debe ser >= {min_v}")
+            if max_v is not None and value > max_v:
+                raise ValueError(f"{key} debe ser <= {max_v}")
+            return value
+    if val.startswith("{") or val.startswith("["):
+        return json.loads(val)
+    if val.isdigit():
+        return int(val)
+    return val
+
 
 @bp.route("/")
 @login_required
@@ -22,24 +60,52 @@ def index():
 @login_required
 @admin_required
 def update_setting(key):
-    import json
     val = request.form.get("value", "").strip()
     try:
-        if val.startswith("{") or val.startswith("["):
-            value = json.loads(val)
-        elif val.isdigit():
-            value = int(val)
-        elif val.replace(".", "", 1).replace("-", "", 1).isdigit():
-            value = float(val)
-        else:
-            value = val
-    except json.JSONDecodeError as e:
-        flash(f"JSON inválido en {key}: {e}", "danger")
+        value = _parse_setting_value(key, val)
+    except Exception as e:
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"status": "error", "message": f"Valor inválido en {key}: {e}"}, 400
+        flash(f"Valor inválido en {key}: {e}", "danger")
         return redirect(url_for("settings.index"))
-    except Exception:
-        value = val
+    
     set_setting(key, value)
+    
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return {"status": "success", "message": "Configuración actualizada."}
+        
     flash("Configuración actualizada.", "success")
+    return redirect(url_for("settings.index"))
+
+
+@bp.route("/bulk-settings", methods=["POST"])
+@login_required
+@admin_required
+def bulk_settings():
+    """Actualiza múltiples configuraciones a la vez."""
+    settings_data = request.form.to_dict()
+    errors = []
+    
+    for key, val in settings_data.items():
+        if key == "csrf_token":
+            continue
+        val = val.strip()
+        try:
+            value = _parse_setting_value(key, val)
+            set_setting(key, value)
+        except Exception as e:
+            errors.append(f"{key}: {str(e)}")
+            
+    if errors:
+        msg = "Algunos errores: " + ", ".join(errors)
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"status": "error", "message": msg}, 400
+        flash(msg, "warning")
+    else:
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"status": "success", "message": "Configuraciones actualizadas."}
+        flash("Configuraciones actualizadas.", "success")
+        
     return redirect(url_for("settings.index"))
 
 

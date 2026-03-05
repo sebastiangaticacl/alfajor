@@ -5,9 +5,10 @@
 <h1 class="page-title">Registrar pago</h1>
 <div class="card">
   <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
-      <label>Empleado</label>
-      <select name="employee_id" class="form-input" required>
+      <label for="employee_id">Empleado</label>
+      <select id="employee_id" name="employee_id" class="form-input" required>
         <option value="">—</option>
         {% for e in employees %}
         <option value="{{ e.id }}">{{ e.full_name }}</option>
@@ -15,8 +16,8 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Periodo</label>
-      <select name="pay_period_id" class="form-input" required>
+      <label for="pay_period_id">Periodo</label>
+      <select id="pay_period_id" name="pay_period_id" class="form-input" required>
         <option value="">—</option>
         {% for p in periods %}
         <option value="{{ p.id }}">{{ p.name }}</option>
@@ -24,24 +25,24 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Monto (CLP)</label>
-      <input type="number" name="amount" step="1" min="0" class="form-input" placeholder="Pesos chilenos" required>
+      <label for="amount">Monto (CLP)</label>
+      <input type="number" id="amount" name="amount" step="1" min="0" class="form-input" placeholder="Pesos chilenos" required>
     </div>
     <div class="form-group">
-      <label>Método</label>
-      <select name="method" class="form-input">
+      <label for="method">Método</label>
+      <select id="method" name="method" class="form-input">
         <option value="TRANSFER">Transferencia</option>
         <option value="CASH">Efectivo</option>
         <option value="CHECK">Cheque</option>
       </select>
     </div>
     <div class="form-group">
-      <label>Referencia</label>
-      <input type="text" name="reference" class="form-input" placeholder="Nº operación">
+      <label for="reference">Referencia</label>
+      <input type="text" id="reference" name="reference" class="form-input" placeholder="Nº operación">
     </div>
     <div class="form-group">
-      <label>Fecha pago</label>
-      <input type="date" name="payment_date" class="form-input" required>
+      <label for="payment_date">Fecha pago</label>
+      <input type="date" id="payment_date" name="payment_date" class="form-input" required>
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">Registrar</button>

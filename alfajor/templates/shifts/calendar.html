@@ -3,22 +3,32 @@
 
 {% block content %}
 <h1 class="page-title">Turnos</h1>
+<p class="page-subtitle">Planificación semanal por empleado.</p>
 
 <div class="calendar-toolbar">
   <a href="{{ url_for('shifts.calendar', week=prev_week) }}" class="btn btn-secondary">← Anterior</a>
   <span class="calendar-range">{{ monday.strftime('%d/%m') }} – {{ sunday.strftime('%d/%m/%Y') }}</span>
   <a href="{{ url_for('shifts.calendar', week=next_week) }}" class="btn btn-secondary">Siguiente →</a>
 </div>
+<input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
+
+{% if not week %}
+<div class="card schedule-card">
+  <p class="text-muted">No hay semana creada. Crea una para comenzar a asignar turnos.</p>
+</div>
+{% endif %}
 
 {% if week %}
 <div class="week-status badge badge-{{ 'info' if week.status == 'BORRADOR' else 'success' if week.status == 'PUBLICADA' else 'warning' }}">{{ week.status }}</div>
 {% if week.status == 'BORRADOR' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
 <form action="{{ url_for('shifts.week_publish', id=week.id) }}" method="post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn btn-primary btn-sm">Publicar semana</button>
 </form>
 {% endif %}
 {% if week.status == 'PUBLICADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
 <form action="{{ url_for('shifts.week_close', id=week.id) }}" method="post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn btn-secondary btn-sm">Cerrar semana</button>
 </form>
 {% endif %}
@@ -26,6 +36,7 @@
 
 {% if not week and current_user.role in ['ADMIN', 'ENCARGADO'] %}
 <form action="{{ url_for('shifts.week_new') }}" method="post" style="margin: var(--space-4) 0;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="start_date" value="{{ monday.isoformat() }}">
   <button type="submit" class="btn btn-primary">Crear semana</button>
 </form>
@@ -35,15 +46,16 @@
 <div class="card" style="margin-top: var(--space-4);">
   <div class="card-header">Nuevo turno</div>
   <form action="{{ url_for('shifts.shift_new') }}" method="post" class="shift-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="week_id" value="{{ week.id }}">
     <div class="form-row">
       <div class="form-group">
-        <label>Fecha</label>
-        <input type="date" name="date" class="form-input" value="{{ monday.isoformat() }}" min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
+        <label for="shift_date">Fecha</label>
+        <input type="date" id="shift_date" name="date" class="form-input" value="{{ monday.isoformat() }}" min="{{ monday.isoformat() }}" max="{{ sunday.isoformat() }}" required>
       </div>
       <div class="form-group">
-        <label>Empleado</label>
-        <select name="employee_id" class="form-input" required>
+        <label for="shift_employee">Empleado</label>
+        <select id="shift_employee" name="employee_id" class="form-input" required>
           <option value="">—</option>
           {% for e in employees %}
           <option value="{{ e.id }}">{{ e.full_name }}</option>
@@ -51,8 +63,8 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Rol</label>
-        <select name="shift_role" class="form-input">
+        <label for="shift_role">Rol</label>
+        <select id="shift_role" name="shift_role" class="form-input">
           <option value="caja">Caja</option>
           <option value="barra">Barra</option>
           <option value="cocina">Cocina</option>
@@ -60,12 +72,12 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Inicio</label>
-        <input type="time" name="start_time" class="form-input" value="09:00">
+        <label for="shift_start">Inicio</label>
+        <input type="time" id="shift_start" name="start_time" class="form-input" value="09:00">
       </div>
       <div class="form-group">
-        <label>Fin</label>
-        <input type="time" name="end_time" class="form-input" value="17:00">
+        <label for="shift_end">Fin</label>
+        <input type="time" id="shift_end" name="end_time" class="form-input" value="17:00">
       </div>
       <div class="form-group" style="align-self: flex-end;">
         <button type="submit" class="btn btn-primary">Agregar</button>
@@ -75,49 +87,607 @@
 </div>
 {% endif %}
 
-<div class="card" style="margin-top: var(--space-4);">
-  <div class="card-header">Turnos de la semana</div>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Empleado</th>
-        <th>Rol</th>
-        <th>Horario</th>
-        <th>Estado</th>
-        {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-        <th></th>
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in shifts %}
-      <tr>
-        <td>{{ s.date.strftime('%d/%m') }}</td>
-        <td>{{ s.employee.full_name }}</td>
-        <td>{{ s.shift_role }}</td>
-        <td>{{ s.start_time.strftime('%H:%M') }} – {{ s.end_time.strftime('%H:%M') }}</td>
-        <td><span class="badge badge-info">{{ s.status }}</span></td>
-        {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
-        <td>
-          <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar turno?');">
-            <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
-          </form>
-        </td>
-        {% endif %}
-      </tr>
-      {% else %}
-      <tr><td colspan="6" class="text-muted">Sin turnos esta semana.</td></tr>
+<div class="schedule-layout">
+  <div class="card schedule-card">
+    <div class="schedule-header">
+    <div>
+      <h2 class="schedule-title">Programación semanal</h2>
+      <p class="text-sm text-muted">Distribución de turnos por día y empleado.</p>
+    </div>
+    <div class="schedule-legend">
+      {% for role in shift_roles %}
+      <span class="legend-item" data-role="{{ role }}">{{ role|capitalize }}</span>
       {% endfor %}
-    </tbody>
-  </table>
+    </div>
+  </div>
+  <div class="schedule-controls">
+    <div class="control-group">
+      <button type="button" class="btn btn-secondary btn-sm" id="toggle-select">Seleccionar turnos</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="bulk-edit" disabled>Editar selección</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="bulk-duplicate" disabled>Duplicar selección</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="clear-selection" disabled>Limpiar</button>
+    </div>
+    <div class="control-group">
+      <button type="button" class="btn btn-secondary btn-sm" id="undo-action" disabled>Deshacer</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="redo-action" disabled>Rehacer</button>
+    </div>
+  </div>
+
+  <div class="schedule-grid" id="schedule-grid">
+      <div class="schedule-row schedule-row--header">
+        <div class="schedule-cell schedule-cell--name">Empleado</div>
+        {% for day in week_days %}
+        <div class="schedule-cell schedule-cell--day{% if day.weekday() >= 5 %} is-weekend{% endif %}">
+          <span class="day-name">{{ day.strftime('%a') }}</span>
+          <span class="day-date">{{ day.strftime('%d/%m') }}</span>
+        </div>
+        {% endfor %}
+        <div class="schedule-cell schedule-cell--total">Total</div>
+      </div>
+
+      {% for group in branch_groups %}
+      <div class="schedule-row schedule-row--branch">
+        <div class="schedule-cell schedule-cell--branch">
+          <span class="branch-name">{{ group.branch.name if group.branch else 'Sin sucursal' }}</span>
+          <span class="branch-total">{{ branch_totals.get(group.branch.id|string if group.branch else '', 0) }}h</span>
+        </div>
+      </div>
+        {% for e in group.employees %}
+        <div class="schedule-row">
+          <div class="schedule-cell schedule-cell--name">
+            <div class="employee-name">{{ e.full_name }}</div>
+            <div class="employee-meta text-muted">{{ e.base_role or '—' }}</div>
+          </div>
+      {% for day in week_days %}
+          {% set day_key = day.isoformat() %}
+      <div class="schedule-cell schedule-cell--shift{% if day.weekday() >= 5 %} is-weekend{% endif %}" data-employee-id="{{ e.id }}" data-date="{{ day_key }}">
+            {% for s in schedule_map.get(e.id|string, {}).get(day_key, []) %}
+        <div class="shift-chip" data-role="{{ s.shift_role }}" draggable="true"
+             data-shift-id="{{ s.id }}"
+             data-employee-id="{{ e.id }}"
+             data-date="{{ day_key }}"
+             data-start="{{ s.start_time.strftime('%H:%M') }}"
+             data-end="{{ s.end_time.strftime('%H:%M') }}"
+             data-shift-role="{{ s.shift_role }}">
+              <span class="shift-role">{{ s.shift_role|capitalize }}</span>
+              <span class="shift-time">{{ s.start_time.strftime('%H:%M') }}–{{ s.end_time.strftime('%H:%M') }}</span>
+              {% if week and week.status != 'CERRADA' and current_user.role in ['ADMIN', 'ENCARGADO'] %}
+          <form action="{{ url_for('shifts.shift_delete', id=s.id) }}" method="post" class="shift-delete">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" aria-label="Eliminar turno" title="Eliminar turno">×</button>
+              </form>
+              {% endif %}
+            </div>
+            {% else %}
+            <span class="shift-empty">—</span>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          <div class="schedule-cell schedule-cell--total">
+            {{ employee_hours.get(e.id|string, 0) }}h
+          </div>
+        </div>
+        {% endfor %}
+      {% endfor %}
+
+      <div class="schedule-row schedule-row--totals">
+        <div class="schedule-cell schedule-cell--name">Total día</div>
+        {% for day in week_days %}
+        {% set day_key = day.isoformat() %}
+        <div class="schedule-cell schedule-cell--total{% if day.weekday() >= 5 %} is-weekend{% endif %}">
+          {{ day_totals.get(day_key, 0) }}h
+        </div>
+        {% endfor %}
+        <div class="schedule-cell schedule-cell--total">
+          {{ segment_totals.M + segment_totals.T + segment_totals.N }}h
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card schedule-summary">
+    <div class="card-header">Resumen de programación</div>
+    <div class="summary-metrics">
+      <div class="summary-item">
+        <span>Total semana</span>
+        <strong>{{ segment_totals.M + segment_totals.T + segment_totals.N }}h</strong>
+      </div>
+      <div class="summary-item">
+        <span>Mañana</span>
+        <strong>{{ segment_totals.M }}h</strong>
+      </div>
+      <div class="summary-item">
+        <span>Tarde</span>
+        <strong>{{ segment_totals.T }}h</strong>
+      </div>
+      <div class="summary-item">
+        <span>Noche</span>
+        <strong>{{ segment_totals.N }}h</strong>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table summary-table">
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>M</th>
+            <th>T</th>
+            <th>N</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in week_days %}
+          {% set day_key = day.isoformat() %}
+          <tr>
+            <td>{{ day.strftime('%a %d') }}</td>
+            <td>{{ day_segments.get(day_key, {}).M }}</td>
+            <td>{{ day_segments.get(day_key, {}).T }}</td>
+            <td>{{ day_segments.get(day_key, {}).N }}</td>
+            <td><strong>{{ day_totals.get(day_key, 0) }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<style>
-.calendar-toolbar { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
-.calendar-range { font-weight: var(--font-semibold); }
-.week-status { margin-right: var(--space-2); }
-.shift-form .form-row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; }
-.form-group { margin-bottom: 0; }
-</style>
+<div class="shift-editor" id="shift-editor" aria-hidden="true">
+  <div class="shift-editor-card">
+    <div class="shift-editor-header">
+      <h3>Editar turno</h3>
+      <button type="button" class="shift-editor-close" aria-label="Cerrar">×</button>
+    </div>
+    <form id="shift-editor-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="shift_id" id="editor-shift-id">
+      <input type="hidden" name="bulk_ids" id="editor-bulk-ids">
+      <div class="form-group">
+        <label for="editor-employee">Empleado</label>
+        <select id="editor-employee" name="employee_id" class="form-input">
+          <option value="">No cambiar</option>
+          {% for e in employees %}
+          <option value="{{ e.id }}">{{ e.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-date">Fecha</label>
+        <input type="date" id="editor-date" name="date" class="form-input">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editor-start">Inicio</label>
+          <input type="time" id="editor-start" name="start_time" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="editor-end">Fin</label>
+          <input type="time" id="editor-end" name="end_time" class="form-input">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="editor-role">Rol</label>
+        <select id="editor-role" name="shift_role" class="form-input">
+          <option value="">No cambiar</option>
+          {% for role in shift_roles %}
+          <option value="{{ role }}">{{ role|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary shift-editor-close">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+  (function() {
+    const grid = document.getElementById('schedule-grid');
+    const csrfToken = document.getElementById('csrf-token').value;
+    const editor = document.getElementById('shift-editor');
+    const editorForm = document.getElementById('shift-editor-form');
+    const closeButtons = editor.querySelectorAll('.shift-editor-close');
+    const toggleSelect = document.getElementById('toggle-select');
+    const bulkEdit = document.getElementById('bulk-edit');
+    const bulkDuplicate = document.getElementById('bulk-duplicate');
+    const clearSelection = document.getElementById('clear-selection');
+    const undoBtn = document.getElementById('undo-action');
+    const redoBtn = document.getElementById('redo-action');
+    let selectionMode = false;
+    const selected = new Set();
+
+    const historyKey = 'shiftHistory';
+    const history = JSON.parse(sessionStorage.getItem(historyKey) || '{"undo":[],"redo":[]}');
+
+    function saveHistory() {
+      sessionStorage.setItem(historyKey, JSON.stringify(history));
+      if (undoBtn) undoBtn.disabled = history.undo.length === 0;
+      if (redoBtn) redoBtn.disabled = history.redo.length === 0;
+    }
+
+    function pushHistory(action) {
+      history.undo.push(action);
+      history.redo = [];
+      saveHistory();
+    }
+
+    function openEditor(data) {
+      editor.setAttribute('aria-hidden', 'false');
+      editor.classList.add('is-open');
+      document.getElementById('editor-shift-id').value = data.shiftId;
+      document.getElementById('editor-employee').value = data.employeeId;
+      document.getElementById('editor-date').value = data.date;
+      document.getElementById('editor-start').value = data.start;
+      document.getElementById('editor-end').value = data.end;
+      document.getElementById('editor-role').value = data.role;
+      document.getElementById('editor-bulk-ids').value = '';
+    }
+
+    function closeEditor() {
+      editor.classList.remove('is-open');
+      editor.setAttribute('aria-hidden', 'true');
+    }
+
+    closeButtons.forEach(btn => btn.addEventListener('click', closeEditor));
+    editor.addEventListener('click', (e) => {
+      if (e.target === editor) closeEditor();
+    });
+
+    function updateSelectionControls() {
+      const hasSelection = selected.size > 0;
+      if (bulkEdit) bulkEdit.disabled = !hasSelection;
+      if (bulkDuplicate) bulkDuplicate.disabled = !hasSelection;
+      if (clearSelection) clearSelection.disabled = !hasSelection;
+      if (toggleSelect) toggleSelect.classList.toggle('is-active', selectionMode);
+    }
+
+    function clearSelected() {
+      selected.clear();
+      document.querySelectorAll('.shift-chip.is-selected').forEach(el => el.classList.remove('is-selected'));
+      updateSelectionControls();
+    }
+
+    if (toggleSelect) {
+      toggleSelect.addEventListener('click', () => {
+        selectionMode = !selectionMode;
+        if (!selectionMode) clearSelected();
+        updateSelectionControls();
+      });
+    }
+
+    if (clearSelection) {
+      clearSelection.addEventListener('click', clearSelected);
+    }
+
+    if (bulkEdit) {
+      bulkEdit.addEventListener('click', () => {
+        if (selected.size === 0) return;
+        editor.setAttribute('aria-hidden', 'false');
+        editor.classList.add('is-open');
+        document.getElementById('editor-shift-id').value = '';
+        document.getElementById('editor-bulk-ids').value = Array.from(selected).join(',');
+        document.getElementById('editor-employee').value = '';
+        document.getElementById('editor-date').value = '';
+        document.getElementById('editor-start').value = '';
+        document.getElementById('editor-end').value = '';
+        document.getElementById('editor-role').value = '';
+      });
+    }
+
+    if (bulkDuplicate) {
+      bulkDuplicate.addEventListener('click', () => {
+        if (selected.size === 0) return;
+        const chips = Array.from(selected).map(id => document.querySelector(`.shift-chip[data-shift-id="${id}"]`));
+        const action = {type: 'create', shifts: []};
+        Promise.all(chips.map(chip => {
+          const payload = {
+            employee_id: chip.dataset.employeeId,
+            date: chip.dataset.date,
+            start_time: chip.dataset.start,
+            end_time: chip.dataset.end,
+            shift_role: chip.dataset.shiftRole
+          };
+          return postCreate(payload).then(resp => {
+            if (resp.shift_id) {
+              action.shifts.push({shift_id: resp.shift_id, payload});
+            }
+          });
+        })).then(() => {
+          pushHistory(action);
+          window.location.reload();
+        });
+      });
+    }
+
+    function postUpdate(payload) {
+      return fetch(`/shifts/shift/${payload.shift_id}/update`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams(payload)
+      }).then(r => r.json());
+    }
+
+    function postCreate(payload) {
+      return fetch('/shifts/shift/create', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+    }
+
+    function postBulkUpdate(payload) {
+      return fetch('/shifts/shift/bulk-update', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+    }
+
+    function postDelete(shiftId) {
+      return fetch(`/shifts/shift/${shiftId}/delete`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({csrf_token: csrfToken})
+      }).then(r => r.ok ? {status: 'success'} : r.json());
+    }
+
+    function applyAction(action, reverse) {
+      if (action.type === 'update') {
+        const updates = action.shifts.map(item => reverse ? item.prev : item.next);
+        return Promise.all(updates.map(u => postUpdate({
+          shift_id: u.shift_id,
+          employee_id: u.employee_id,
+          date: u.date,
+          start_time: u.start_time,
+          end_time: u.end_time,
+          shift_role: u.shift_role,
+          csrf_token: csrfToken
+        }))).then(() => window.location.reload());
+      }
+      if (action.type === 'create') {
+        if (reverse) {
+          return Promise.all(action.shifts.map(s => postDelete(s.shift_id))).then(() => window.location.reload());
+        }
+        return Promise.all(action.shifts.map(s => postCreate(s.payload).then(resp => {
+          if (resp.shift_id) s.shift_id = resp.shift_id;
+        }))).then(() => window.location.reload());
+      }
+      if (action.type === 'delete') {
+        if (reverse) {
+          return Promise.all(action.shifts.map(s => postCreate(s.payload))).then(() => window.location.reload());
+        }
+      }
+    }
+
+    grid.addEventListener('dragstart', (e) => {
+      const chip = e.target.closest('.shift-chip');
+      if (!chip) return;
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        shift_id: chip.dataset.shiftId,
+        employee_id: chip.dataset.employeeId,
+        date: chip.dataset.date,
+        start_time: chip.dataset.start,
+        end_time: chip.dataset.end,
+        shift_role: chip.dataset.shiftRole
+      }));
+      chip.classList.add('is-dragging');
+    });
+
+    grid.addEventListener('dragend', (e) => {
+      const chip = e.target.closest('.shift-chip');
+      if (chip) chip.classList.remove('is-dragging');
+    });
+
+    grid.addEventListener('dragover', (e) => {
+      const cell = e.target.closest('.schedule-cell--shift');
+      if (!cell) return;
+      e.preventDefault();
+      cell.classList.add('is-drop-target');
+    });
+
+    grid.addEventListener('dragleave', (e) => {
+      const cell = e.target.closest('.schedule-cell--shift');
+      if (cell) cell.classList.remove('is-drop-target');
+    });
+
+    grid.addEventListener('drop', (e) => {
+      const cell = e.target.closest('.schedule-cell--shift');
+      if (!cell) return;
+      e.preventDefault();
+      cell.classList.remove('is-drop-target');
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const payload = {
+        shift_id: data.shift_id,
+        employee_id: cell.dataset.employeeId,
+        date: cell.dataset.date,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        shift_role: data.shift_role,
+        csrf_token: csrfToken
+      };
+      const action = {
+        type: 'update',
+        shifts: [{
+          shift_id: data.shift_id,
+          prev: data,
+          next: payload
+        }]
+      };
+      postUpdate(payload).then(resp => {
+        if (resp.status === 'success') {
+          pushHistory(action);
+          window.location.reload();
+        } else {
+          alert(resp.message || 'Error al mover turno');
+        }
+      });
+    });
+
+    grid.addEventListener('click', (e) => {
+      const chip = e.target.closest('.shift-chip');
+      if (!chip || e.target.closest('.shift-delete')) return;
+      if (selectionMode) {
+        const id = chip.dataset.shiftId;
+        chip.classList.toggle('is-selected');
+        if (selected.has(id)) {
+          selected.delete(id);
+        } else {
+          selected.add(id);
+        }
+        updateSelectionControls();
+        return;
+      }
+      openEditor({
+        shiftId: chip.dataset.shiftId,
+        employeeId: chip.dataset.employeeId,
+        date: chip.dataset.date,
+        start: chip.dataset.start,
+        end: chip.dataset.end,
+        role: chip.dataset.shiftRole
+      });
+    });
+
+    grid.addEventListener('submit', (e) => {
+      const form = e.target.closest('.shift-delete');
+      if (!form) return;
+      e.preventDefault();
+      const chip = e.target.closest('.shift-chip');
+      const payload = {
+        employee_id: chip.dataset.employeeId,
+        date: chip.dataset.date,
+        start_time: chip.dataset.start,
+        end_time: chip.dataset.end,
+        shift_role: chip.dataset.shiftRole
+      };
+      const action = {type: 'delete', shifts: [{shift_id: chip.dataset.shiftId, payload}]};
+      postDelete(chip.dataset.shiftId).then(resp => {
+        if (resp.status === 'success') {
+          pushHistory(action);
+          window.location.reload();
+        } else {
+          alert(resp.message || 'Error al eliminar');
+        }
+      });
+    });
+
+    editorForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const bulkIds = document.getElementById('editor-bulk-ids').value;
+      if (bulkIds) {
+        const ids = bulkIds.split(',');
+        const shifts = ids.map(id => {
+          const chip = document.querySelector(`.shift-chip[data-shift-id="${id}"]`);
+          return {
+            shift_id: id,
+            prev: {
+              shift_id: id,
+              employee_id: chip.dataset.employeeId,
+              date: chip.dataset.date,
+              start_time: chip.dataset.start,
+              end_time: chip.dataset.end,
+              shift_role: chip.dataset.shiftRole
+            }
+          };
+        });
+        const payload = {
+          shift_ids: ids,
+          employee_id: document.getElementById('editor-employee').value || null,
+          date: document.getElementById('editor-date').value || null,
+          start_time: document.getElementById('editor-start').value || null,
+          end_time: document.getElementById('editor-end').value || null,
+          shift_role: document.getElementById('editor-role').value || null
+        };
+        const next = shifts.map(s => ({
+          shift_id: s.shift_id,
+          employee_id: payload.employee_id || s.prev.employee_id,
+          date: payload.date || s.prev.date,
+          start_time: payload.start_time || s.prev.start_time,
+          end_time: payload.end_time || s.prev.end_time,
+          shift_role: payload.shift_role || s.prev.shift_role
+        }));
+        const action = {type: 'update', shifts: shifts.map((s, i) => ({shift_id: s.shift_id, prev: s.prev, next: next[i]}))};
+        postBulkUpdate(payload).then(resp => {
+          if (resp.status === 'success') {
+            pushHistory(action);
+            window.location.reload();
+          } else {
+            alert(resp.message || 'Error al guardar');
+          }
+        });
+      } else {
+        const shiftId = document.getElementById('editor-shift-id').value;
+        const chip = document.querySelector(`.shift-chip[data-shift-id="${shiftId}"]`);
+        const prev = {
+          shift_id: shiftId,
+          employee_id: chip.dataset.employeeId,
+          date: chip.dataset.date,
+          start_time: chip.dataset.start,
+          end_time: chip.dataset.end,
+          shift_role: chip.dataset.shiftRole
+        };
+        const payload = {
+          shift_id: shiftId,
+          employee_id: document.getElementById('editor-employee').value,
+          date: document.getElementById('editor-date').value,
+          start_time: document.getElementById('editor-start').value,
+          end_time: document.getElementById('editor-end').value,
+          shift_role: document.getElementById('editor-role').value,
+          csrf_token: csrfToken
+        };
+        const action = {type: 'update', shifts: [{shift_id: shiftId, prev, next: payload}]};
+        postUpdate(payload).then(resp => {
+          if (resp.status === 'success') {
+            pushHistory(action);
+            window.location.reload();
+          } else {
+            alert(resp.message || 'Error al guardar');
+          }
+        });
+      }
+    });
+
+    if (undoBtn) {
+      undoBtn.addEventListener('click', () => {
+        const action = history.undo.pop();
+        if (!action) return;
+        history.redo.push(action);
+        saveHistory();
+        applyAction(action, true);
+      });
+    }
+
+    if (redoBtn) {
+      redoBtn.addEventListener('click', () => {
+        const action = history.redo.pop();
+        if (!action) return;
+        history.undo.push(action);
+        saveHistory();
+        applyAction(action, false);
+      });
+    }
+
+    saveHistory();
+  })();
+</script>
+{% endblock %}
+
 {% endblock %}

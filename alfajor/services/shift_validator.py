@@ -10,13 +10,14 @@ def validate_no_overlap(employee_id, date_val, start_time, end_time, exclude_shi
     q = Shift.query.filter(
         Shift.employee_id == employee_id,
         Shift.date == date_val,
-        Shift.status != "ANULADO"
+        Shift.status != "ANULADO",
+        Shift.start_time < end_time,
+        Shift.end_time > start_time,
     )
     if exclude_shift_id:
         q = q.filter(Shift.id != exclude_shift_id)
-    for s in q.all():
-        if _times_overlap(start_time, end_time, s.start_time, s.end_time):
-            return False, f"Solapamiento con turno existente"
+    if q.first():
+        return False, "Solapamiento con turno existente"
     return True, None
 
 

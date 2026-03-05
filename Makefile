@@ -1,5 +1,5 @@
 # ALFAJOR - Comandos de desarrollo
-.PHONY: run migrate seed install
+.PHONY: run migrate seed install setup
 
 install:
 	pip install -r requirements.txt
@@ -9,6 +9,9 @@ migrate:
 
 seed:
 	python scripts/seed.py
+
+setup: migrate seed
+	@echo "Base de datos lista. Usuario: admin / admin"
 
 run:
 	FLASK_APP=alfajor flask run

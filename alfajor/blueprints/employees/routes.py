@@ -1,6 +1,6 @@
 """Rutas empleados."""
 
-from flask import render_template, redirect, url_for, flash, abort
+from flask import render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from alfajor.utils.decorators import encargado_or_admin
 from alfajor.blueprints.employees import bp
@@ -12,11 +12,15 @@ from alfajor.models import Employee, Branch
 @bp.route("/")
 @login_required
 def list():
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
     if current_user.role in ("ADMIN", "ENCARGADO"):
-        employees = Employee.query.order_by(Employee.last_name).all()
-    else:
-        employees = [current_user.employee] if current_user.employee else []
-    return render_template("employees/list.html", employees=employees)
+        query = Employee.query.order_by(Employee.last_name)
+        total = query.count()
+        employees = query.limit(per_page).offset((page - 1) * per_page).all()
+        return render_template("employees/list.html", employees=employees, page=page, per_page=per_page, total=total)
+    employees = [current_user.employee] if current_user.employee else []
+    return render_template("employees/list.html", employees=employees, page=1, per_page=per_page, total=len(employees))
 
 
 @bp.route("/new", methods=["GET", "POST"])

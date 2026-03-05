@@ -1,69 +1,35 @@
+{% set current = request.endpoint or '' %}
 <aside class="sidebar" role="navigation">
   <div class="sidebar-header">
     <img src="{{ url_for('static', filename='img/logo-cosas-ricas.png') }}" alt="Cosas Ricas" class="sidebar-logo-img">
     <span class="sidebar-logo">ALFAJOR</span>
   </div>
   <nav class="sidebar-nav">
-    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">Dashboard</a>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link{% if current == 'admin.dashboard' %} active{% endif %}"{% if current == 'admin.dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
     {% if current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
-    <a href="{{ url_for('shifts.calendar') }}" class="sidebar-link">Turnos</a>
+    <a href="{{ url_for('shifts.calendar') }}" class="sidebar-link{% if current.startswith('shifts.') %} active{% endif %}"{% if current.startswith('shifts.') %} aria-current="page"{% endif %}>Turnos</a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}
-    <a href="{{ url_for('employees.list') }}" class="sidebar-link">Personas</a>
+    <a href="{{ url_for('employees.list') }}" class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}"{% if current.startswith('employees.') %} aria-current="page"{% endif %}>Personas</a>
     {% elif current_user.role == 'TRABAJADOR' and current_user.employee %}
-    <a href="{{ url_for('employees.detail', id=current_user.employee.id) }}" class="sidebar-link">Mi perfil</a>
+    <a href="{{ url_for('employees.detail', id=current_user.employee.id) }}" class="sidebar-link{% if current.startswith('employees.') %} active{% endif %}"{% if current.startswith('employees.') %} aria-current="page"{% endif %}>Mi perfil</a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'ENCARGADO', 'TRABAJADOR'] %}
-    <a href="{{ url_for('requests.list') }}" class="sidebar-link">Solicitudes</a>
+    <a href="{{ url_for('requests.list') }}" class="sidebar-link{% if current.startswith('requests.') %} active{% endif %}"{% if current.startswith('requests.') %} aria-current="page"{% endif %}>Solicitudes</a>
     {% endif %}
     {% if current_user.role in ['ADMIN', 'CONTABILIDAD'] %}
-    <a href="{{ url_for('payroll.periods') }}" class="sidebar-link">Pagos</a>
+    <a href="{{ url_for('payroll.periods') }}" class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}"{% if current.startswith('payroll.') %} aria-current="page"{% endif %}>Pagos</a>
     {% elif current_user.role == 'TRABAJADOR' %}
-    <a href="{{ url_for('payroll.my_statements') }}" class="sidebar-link">Mis liquidaciones</a>
+    <a href="{{ url_for('payroll.my_statements') }}" class="sidebar-link{% if current.startswith('payroll.') %} active{% endif %}"{% if current.startswith('payroll.') %} aria-current="page"{% endif %}>Mis liquidaciones</a>
     {% endif %}
     {% if current_user.role == 'TRABAJADOR' %}
-    <a href="{{ url_for('ranking.my_score') }}" class="sidebar-link">Mi score</a>
+    <a href="{{ url_for('ranking.my_score') }}" class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}"{% if current.startswith('ranking.') %} aria-current="page"{% endif %}>Mi score</a>
     {% else %}
-    <a href="{{ url_for('ranking.index') }}" class="sidebar-link">Ranking</a>
+    <a href="{{ url_for('ranking.index') }}" class="sidebar-link{% if current.startswith('ranking.') %} active{% endif %}"{% if current.startswith('ranking.') %} aria-current="page"{% endif %}>Ranking</a>
     {% endif %}
     {% if current_user.role == 'ADMIN' %}
-    <a href="{{ url_for('admin.users') }}" class="sidebar-link">Usuarios</a>
-    <a href="{{ url_for('settings.index') }}" class="sidebar-link">Configuración</a>
+    <a href="{{ url_for('admin.users') }}" class="sidebar-link{% if current.startswith('admin.user') or current == 'admin.users' %} active{% endif %}"{% if current.startswith('admin.user') or current == 'admin.users' %} aria-current="page"{% endif %}>Usuarios</a>
+    <a href="{{ url_for('settings.index') }}" class="sidebar-link{% if current.startswith('settings.') %} active{% endif %}"{% if current.startswith('settings.') %} aria-current="page"{% endif %}>Configuración</a>
     {% endif %}
   </nav>
 </aside>
-
-<style>
-.sidebar {
-  width: var(--sidebar-width);
-  min-width: var(--sidebar-width);
-  background: var(--color-bg-secondary);
-  border-right: 1px solid var(--color-border-default);
-  padding: var(--space-4);
-}
-.sidebar-header { margin-bottom: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
-.sidebar-logo-img {
-  max-width: 130px;
-  height: auto;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-}
-.sidebar-logo {
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-}
-.sidebar-nav { display: flex; flex-direction: column; gap: var(--space-1); }
-.sidebar-link {
-  display: block;
-  padding: var(--space-2) var(--space-3);
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  border-radius: var(--radius-md);
-  text-decoration: none !important;
-}
-.sidebar-link:hover {
-  background: var(--color-accent-muted);
-  color: var(--color-brand-red);
-}
-</style>

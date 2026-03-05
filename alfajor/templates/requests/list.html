@@ -10,7 +10,8 @@
 {% endif %}
 
 <div class="card">
-  <table class="table">
+  <div class="table-responsive">
+    <table class="table">
     <thead>
       <tr>
         <th>Empleado</th>
@@ -34,10 +35,12 @@
         {% if current_user.role in ['ADMIN', 'ENCARGADO'] and r.status == 'PENDIENTE' %}
         <td>
           <form action="{{ url_for('requests.approve', id=r.id) }}" method="post" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="comment" value="">
             <button type="submit" class="btn btn-secondary btn-sm">Aprobar</button>
           </form>
           <form action="{{ url_for('requests.reject', id=r.id) }}" method="post" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="comment" value="">
             <button type="submit" class="btn btn-secondary btn-sm text-danger">Rechazar</button>
           </form>
@@ -48,6 +51,20 @@
       <tr><td colspan="6" class="text-muted">Sin solicitudes.</td></tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
+
+{% if total and total > per_page %}
+{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="{{ url_for('requests.list', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  {% endif %}
+  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="{{ url_for('requests.list', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

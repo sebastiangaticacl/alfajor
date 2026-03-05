@@ -2,49 +2,325 @@
 {% block title %}Configuración · ALFAJOR · Cosas Ricas{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Configuración</h1>
-<p class="page-subtitle">Horarios, reglas, roles, sucursales.</p>
+<div class="config-container">
+  <div class="flex-between">
+    <div>
+      <h1 class="page-title">Configuración</h1>
+      <p class="page-subtitle">Gestiona las reglas de negocio y sucursales.</p>
+    </div>
+    <div id="ajax-toast" role="status" aria-live="polite" aria-atomic="true">
+      <span id="toast-icon"></span>
+      <span id="toast-message"></span>
+    </div>
+  </div>
 
-<div class="config-grid">
-  <div class="card">
-    <div class="card-header">Configuración JSON</div>
-    <div class="config-settings">
-      {% for key, s in settings.items() %}
+  <nav class="tabs-nav" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-general" data-target="tab-general">General</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-schedule" data-target="tab-schedule">Horarios</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-roles" data-target="tab-roles">Roles</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-branches" data-target="tab-branches">Sucursales</button>
+  </nav>
+
+  <!-- Pestaña: General -->
+  <div class="tab-pane active" id="tab-general" role="tabpanel">
+    <div class="card glass-card">
+      <div class="card-header">
+        <div class="flex-between">
+          <span>Reglas de Negocio</span>
+          <button type="submit" form="bulk-settings-form" class="btn btn-primary btn-sm">Guardar Todo</button>
+        </div>
+      </div>
+      <form id="bulk-settings-form" action="{{ url_for('settings.bulk_settings') }}" method="post" class="ajax-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="config-settings grid-2">
+          {% for key, s in settings.items() if key.startswith('rules.') %}
+          <div class="config-setting-v2">
+            <div class="setting-info">
+              <label class="setting-label">{{ s.description or key }}</label>
+              <code class="text-xs text-muted">{{ key }}</code>
+            </div>
+            <div class="setting-input-wrapper">
+              <input type="text" name="{{ key }}" value="{{ s.value|json_dumps }}" class="form-input w-full">
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pestaña: Horarios -->
+  <div class="tab-pane" id="tab-schedule" role="tabpanel">
+    <div class="card glass-card">
+      <div class="card-header">Horarios Operativos</div>
+      {% set s = settings.get('schedule.hours') %}
+      {% if s %}
       <div class="config-setting">
-        <label class="config-setting-key"><code>{{ key }}</code></label>
-        <form action="{{ url_for('settings.update_setting', key=key) }}" method="post" class="config-setting-form">
-          {% if s.value|setting_is_json %}
-          <textarea name="value" class="form-input form-textarea config-json-input" rows="6">{{ s.value|json_dumps_pretty }}</textarea>
-          {% else %}
-          <input type="text" name="value" value="{{ s.value|json_dumps }}" class="form-input config-simple-input">
-          {% endif %}
-          <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+        <p class="text-sm text-muted mb-4">Configura los rangos de apertura y cierre por cada día de la semana.</p>
+
+        <div class="schedule-editor-v2">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>Apertura</th>
+                <th>Cierre</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="schedule-body">
+              {% for day, ranges in s.value.items() %}
+              <tr class="schedule-row" data-day="{{ day }}">
+                <td class="day-name">{{ day|capitalize }}</td>
+                <td>
+                  <input type="time" class="time-input open-time" value="{{ ranges.open }}">
+                </td>
+                <td>
+                  <input type="time" class="time-input close-time" value="{{ ranges.close }}">
+                </td>
+                <td>
+                  <label class="toggle-switch">
+                    <input type="checkbox" class="day-toggle" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <form action="{{ url_for('settings.update_setting', key='schedule.hours') }}" method="post"
+          class="ajax-form mt-6">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="value" id="schedule-hidden-input" value="{{ s.value|json_dumps }}">
+          <button type="submit" class="btn btn-primary">Actualizar Horarios</button>
         </form>
       </div>
-      {% endfor %}
+      {% endif %}
     </div>
-    {% if not settings %}
-    <p class="text-muted">Sin configuración. Ejecuta el seed.</p>
-    {% endif %}
   </div>
 
-  <div class="card">
-    <div class="card-header">Sucursales</div>
-    <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary config-new-branch">Nueva sucursal</a>
-    <table class="table">
-      <thead>
-        <tr><th>Nombre</th><th>Código</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for b in branches %}
-        <tr>
-          <td>{{ b.name }}</td>
-          <td>{{ b.code or '—' }}</td>
-          <td><a href="{{ url_for('settings.branch_edit', id=b.id) }}" class="btn btn-secondary btn-sm">Editar</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Pestaña: Roles -->
+  <div class="tab-pane" id="tab-roles" role="tabpanel">
+    <div class="card glass-card">
+      <div class="card-header">Roles de Turno</div>
+      {% set s = settings.get('shift_roles') %}
+      {% if s %}
+      <div class="config-setting">
+        <p class="text-sm text-muted mb-4">{{ s.description or 'Configura los cargos disponibles.' }}</p>
+
+        <div class="roles-editor-v2" id="roles-editor">
+          <div class="tags-container" id="roles-tags">
+            {% for role in s.value %}
+            <span class="tag-role" data-role="{{ role }}">
+              {{ role }}
+              <button type="button" class="tag-remove">&times;</button>
+            </span>
+            {% endfor %}
+          </div>
+          <div class="tag-add-wrapper">
+            <input type="text" id="new-role-input" class="form-input sm" placeholder="Nuevo rol...">
+            <button type="button" id="add-role-btn" class="btn btn-secondary btn-sm">Agregar</button>
+          </div>
+        </div>
+
+        <form action="{{ url_for('settings.update_setting', key='shift_roles') }}" method="post" class="ajax-form mt-6">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="value" id="roles-hidden-input" value="{{ s.value|json_dumps }}">
+          <button type="submit" class="btn btn-primary">Guardar Cambios en Roles</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pestaña: Sucursales -->
+  <div class="tab-pane" id="tab-branches" role="tabpanel">
+    <div class="card glass-card">
+      <div class="flex-between mb-4">
+        <div class="card-header" style="margin-bottom:0">Sucursales Activas</div>
+        <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary btn-sm">Nueva sucursal</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in branches %}
+            <tr>
+              <td><strong>{{ b.name }}</strong></td>
+              <td><code>{{ b.code or '—' }}</code></td>
+              <td>
+                {% if b.active %}
+                <span class="badge badge-success">Activa</span>
+                {% else %}
+                <span class="badge badge-danger">Inactiva</span>
+                {% endif %}
+              </td>
+              <td><a href="{{ url_for('settings.branch_edit', id=b.id) }}" class="btn btn-secondary btn-sm">Editar</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Manejo de Pestañas
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+
+        tabBtns.forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        tabPanes.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    // Manejo de Roles (Tags)
+    const rolesContainer = document.getElementById('roles-tags');
+    const rolesInput = document.getElementById('roles-hidden-input');
+    const newRoleInput = document.getElementById('new-role-input');
+    const addRoleBtn = document.getElementById('add-role-btn');
+
+    function updateRolesHidden() {
+      const roles = Array.from(rolesContainer.querySelectorAll('.tag-role')).map(t => t.dataset.role);
+      rolesInput.value = JSON.stringify(roles);
+    }
+
+    if (rolesContainer) {
+      rolesContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('tag-remove')) {
+          e.target.closest('.tag-role').remove();
+          updateRolesHidden();
+        }
+      });
+
+      addRoleBtn.addEventListener('click', () => {
+        const val = newRoleInput.value.trim().toLowerCase();
+        if (val && !Array.from(rolesContainer.querySelectorAll('.tag-role')).some(t => t.dataset.role === val)) {
+          const tag = document.createElement('span');
+          tag.className = 'tag-role';
+          tag.dataset.role = val;
+          tag.innerHTML = `${val} <button type="button" class="tag-remove">&times;</button>`;
+          rolesContainer.appendChild(tag);
+          newRoleInput.value = '';
+          updateRolesHidden();
+        }
+      });
+
+      newRoleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addRoleBtn.click();
+        }
+      });
+    }
+
+    // Manejo de Horarios (Grid)
+    const scheduleBody = document.getElementById('schedule-body');
+    const scheduleHiddenInput = document.getElementById('schedule-hidden-input');
+
+    function updateScheduleHidden() {
+      const schedule = {};
+      scheduleBody.querySelectorAll('.schedule-row').forEach(row => {
+        const day = row.dataset.day;
+        const open = row.querySelector('.open-time').value;
+        const close = row.querySelector('.close-time').value;
+        const active = row.querySelector('.day-toggle').checked;
+
+        if (active) {
+          schedule[day] = { open, close };
+        } else {
+          schedule[day] = { open: "00:00", close: "00:00" };
+        }
+      });
+      scheduleHiddenInput.value = JSON.stringify(schedule);
+    }
+
+    if (scheduleBody) {
+      scheduleBody.addEventListener('change', (e) => {
+        if (e.target.classList.contains('time-input') || e.target.classList.contains('day-toggle')) {
+          updateScheduleHidden();
+        }
+      });
+    }
+
+    // Manejo de AJAX para formularios de configuración
+    const toast = document.getElementById('ajax-toast');
+    const toastMsg = document.getElementById('toast-message');
+
+    function showToast(message, type = 'success') {
+      toastMsg.textContent = message;
+      toast.className = 'show ' + type;
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    const ajaxForms = document.querySelectorAll('.ajax-form');
+    ajaxForms.forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+
+        const formData = new FormData(form);
+        const csrfToken = formData.get('csrf_token');
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+          }
+        })
+          .then(async response => {
+            const data = await response.json();
+            if (response.ok) {
+              showToast(data.message || 'Configuración guardada correctamente', 'success');
+            } else {
+              showToast(data.message || 'Error al guardar la configuración', 'error');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('Error de red al intentar guardar', 'error');
+          })
+          .finally(() => {
+            setTimeout(() => {
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalText;
+            }, 500);
+          });
+      });
+    });
+  });
+</script>
 {% endblock %}

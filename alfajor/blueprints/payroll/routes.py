@@ -7,6 +7,7 @@ from alfajor.utils.decorators import admin_required, contabilidad_or_admin
 from alfajor.blueprints.payroll import bp
 from alfajor.extensions import db
 from alfajor.models import PayPeriod, PayStatement, PayLine, PaymentTransaction, Employee
+from sqlalchemy.orm import selectinload
 from alfajor.enums import PayPeriodStatus, PayPeriodType, PaymentMethod, ReconciliationStatus
 from alfajor.services.payroll_calculator import generate_statements_for_period
 
@@ -16,17 +17,33 @@ from alfajor.services.payroll_calculator import generate_statements_for_period
 def periods():
     if current_user.role == "TRABAJADOR":
         return redirect(url_for("payroll.my_statements"))
-    periods_list = PayPeriod.query.order_by(PayPeriod.start_date.desc()).all()
-    return render_template("payroll/periods.html", periods=periods_list)
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    query = PayPeriod.query.order_by(PayPeriod.start_date.desc())
+    total = query.count()
+    periods_list = query.limit(per_page).offset((page - 1) * per_page).all()
+    return render_template("payroll/periods.html", periods=periods_list, page=page, per_page=per_page, total=total)
 
 
 @bp.route("/my")
 @login_required
 def my_statements():
     if not current_user.employee_id:
-        return render_template("payroll/my_statements.html", statements=[])
-    statements = PayStatement.query.filter_by(employee_id=current_user.employee_id).order_by(PayStatement.created_at.desc()).all()
-    return render_template("payroll/my_statements.html", statements=statements)
+        return render_template("payroll/my_statements.html", statements=[], page=1, per_page=20, total=0)
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    query = PayStatement.query.options(selectinload(PayStatement.pay_period)).filter_by(
+        employee_id=current_user.employee_id
+    ).order_by(PayStatement.created_at.desc())
+    total = query.count()
+    statements = query.limit(per_page).offset((page - 1) * per_page).all()
+    return render_template(
+        "payroll/my_statements.html",
+        statements=statements,
+        page=page,
+        per_page=per_page,
+        total=total,
+    )
 
 
 @bp.route("/period/new", methods=["GET", "POST"])
@@ -64,10 +81,24 @@ def period_new():
 
 @bp.route("/period/<id>")
 @login_required
+@contabilidad_or_admin
 def period_detail(id):
     period = PayPeriod.query.get_or_404(id)
-    statements = PayStatement.query.filter_by(pay_period_id=period.id).all()
-    return render_template("payroll/period_detail.html", period=period, statements=statements)
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    query = PayStatement.query.options(selectinload(PayStatement.employee)).filter_by(
+        pay_period_id=period.id
+    )
+    total = query.count()
+    statements = query.limit(per_page).offset((page - 1) * per_page).all()
+    return render_template(
+        "payroll/period_detail.html",
+        period=period,
+        statements=statements,
+        page=page,
+        per_page=per_page,
+        total=total,
+    )
 
 
 @bp.route("/period/<id>/generate", methods=["POST"])

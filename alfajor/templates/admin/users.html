@@ -8,7 +8,8 @@
 <a href="{{ url_for('admin.user_new') }}" class="btn btn-primary" style="margin-bottom: var(--space-4);">Nuevo usuario</a>
 
 <div class="card">
-  <table class="table">
+  <div class="table-responsive">
+    <table class="table">
     <thead>
       <tr>
         <th>Email</th>
@@ -29,6 +30,7 @@
           <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="btn btn-secondary btn-sm">Editar</a>
           {% if u.id != current_user.id %}
           <form action="{{ url_for('admin.user_delete', id=u.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar usuario?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-secondary btn-sm text-danger">Eliminar</button>
           </form>
           {% endif %}
@@ -36,6 +38,20 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
+
+{% if total and total > per_page %}
+{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="{{ url_for('admin.users', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  {% endif %}
+  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="{{ url_for('admin.users', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

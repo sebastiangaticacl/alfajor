@@ -1,6 +1,8 @@
 """Rutas admin."""
 
 from datetime import date, timedelta
+from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from alfajor.utils.decorators import admin_required
@@ -16,16 +18,19 @@ def dashboard():
     today = date.today()
     monday = today - timedelta(days=today.weekday())
     sunday = monday + timedelta(days=6)
-    shifts_today = Shift.query.filter(Shift.date == today, Shift.status != "ANULADO").all()
-    total_today = len(shifts_today)
-    covered_today = sum(1 for s in shifts_today if s.status == "COMPLETADO")
-    all_weeks = ScheduleWeek.query.all()
-    draft_weeks = sum(1 for w in all_weeks if w.status == "BORRADOR")
-    published_weeks = sum(1 for w in all_weeks if w.status == "PUBLICADA")
-    closed_weeks = sum(1 for w in all_weeks if w.status == "CERRADA")
+    total_today = Shift.query.filter(Shift.date == today, Shift.status != "ANULADO").count()
+    covered_today = Shift.query.filter(Shift.date == today, Shift.status == "COMPLETADO").count()
+    week_counts = dict(
+        db.session.query(ScheduleWeek.status, func.count()).group_by(ScheduleWeek.status).all()
+    )
+    draft_weeks = week_counts.get("BORRADOR", 0)
+    published_weeks = week_counts.get("PUBLICADA", 0)
+    closed_weeks = week_counts.get("CERRADA", 0)
     periods = PayPeriod.query.filter(PayPeriod.status.in_(["ABIERTO", "EN_REVISION"])).all()
     pending_requests = ShiftRequest.query.filter_by(status="PENDIENTE").count()
-    recent_weeks = ScheduleWeek.query.order_by(ScheduleWeek.start_date.desc()).limit(5).all()
+    recent_weeks = ScheduleWeek.query.options(selectinload(ScheduleWeek.branch)).order_by(
+        ScheduleWeek.start_date.desc()
+    ).limit(5).all()
     return render_template(
         "admin/dashboard.html",
         total_today=total_today,
@@ -43,8 +48,12 @@ def dashboard():
 @login_required
 @admin_required
 def users():
-    users_list = User.query.order_by(User.email).all()
-    return render_template("admin/users.html", users=users_list)
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    query = User.query.options(selectinload(User.employee)).order_by(User.email)
+    total = query.count()
+    users_list = query.limit(per_page).offset((page - 1) * per_page).all()
+    return render_template("admin/users.html", users=users_list, page=page, per_page=per_page, total=total)
 
 
 @bp.route("/users/new", methods=["GET", "POST"])

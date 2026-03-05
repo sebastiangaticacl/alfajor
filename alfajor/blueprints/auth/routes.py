@@ -11,16 +11,19 @@ from alfajor.models import User
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        # Modo demo: acepta cualquier dato y entra como admin
-        admin = User.query.filter_by(email="admin").first()
-        if admin:
-            login_user(admin, remember=form.remember.data)
-            return redirect(url_for("admin.dashboard"))
-        flash("Demo no disponible.", "danger")
+        user = User.query.filter_by(email=form.email.data.strip()).first()
+        if user and user.check_password(form.password.data):
+            if not user.active:
+                flash("Usuario inactivo.", "danger")
+            else:
+                login_user(user, remember=form.remember.data)
+                return redirect(url_for("admin.dashboard"))
+        else:
+            flash("Usuario o contraseña incorrectos.", "danger")
     return render_template("auth/login.html", form=form)
 
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     logout_user()

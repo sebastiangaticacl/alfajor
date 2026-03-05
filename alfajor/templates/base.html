@@ -10,6 +10,7 @@
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <div class="app-layout">
     {% block topbar %}
     {% include "components/topbar.html" %}
@@ -22,7 +23,7 @@
       {% endblock %}
       {% endif %}
 
-      <main class="app-main" role="main">
+      <main id="main-content" class="app-main" role="main">
         {% include "components/alerts.html" %}
         {% block content %}{% endblock %}
       </main>

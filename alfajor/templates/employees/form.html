@@ -8,39 +8,39 @@
     {{ form.hidden_tag() }}
     <div class="form-row">
       <div class="form-group">
-        <label>Nombre</label>
-        {{ form.first_name(class_='form-input') }}
+        <label for="first_name">Nombre</label>
+        {{ form.first_name(id='first_name', class_='form-input') }}
       </div>
       <div class="form-group">
-        <label>Apellido</label>
-        {{ form.last_name(class_='form-input') }}
+        <label for="last_name">Apellido</label>
+        {{ form.last_name(id='last_name', class_='form-input') }}
       </div>
     </div>
     <div class="form-group">
-      <label>Email</label>
-      {{ form.email(class_='form-input') }}
+      <label for="email">Email</label>
+      {{ form.email(id='email', class_='form-input') }}
     </div>
     <div class="form-group">
-      <label>Teléfono</label>
-      {{ form.phone(class_='form-input') }}
+      <label for="phone">Teléfono</label>
+      {{ form.phone(id='phone', class_='form-input') }}
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Rol base</label>
-        {{ form.base_role(class_='form-input') }}
+        <label for="base_role">Rol base</label>
+        {{ form.base_role(id='base_role', class_='form-input') }}
       </div>
       <div class="form-group">
-        <label>Valor hora (CLP)</label>
-        {{ form.hourly_rate(class_='form-input', placeholder='Pesos chilenos') }}
+        <label for="hourly_rate">Valor hora (CLP)</label>
+        {{ form.hourly_rate(id='hourly_rate', class_='form-input', placeholder='Pesos chilenos') }}
       </div>
       <div class="form-group">
-        <label>Estado</label>
-        {{ form.status(class_='form-input') }}
+        <label for="status">Estado</label>
+        {{ form.status(id='status', class_='form-input') }}
       </div>
     </div>
     <div class="form-group">
-      <label>Sucursal</label>
-      {{ form.branch_id(class_='form-input') }}
+      <label for="branch_id">Sucursal</label>
+      {{ form.branch_id(id='branch_id', class_='form-input') }}
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">Guardar</button>

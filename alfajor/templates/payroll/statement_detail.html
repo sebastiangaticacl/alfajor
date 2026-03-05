@@ -6,7 +6,8 @@
 <p class="text-secondary">Periodo {{ statement.pay_period.name }}</p>
 
 <div class="card">
-  <table class="table">
+  <div class="table-responsive">
+    <table class="table">
     <thead>
       <tr><th>Concepto</th><th>Cantidad</th><th>Tarifa (CLP)</th><th>Monto (CLP)</th></tr>
     </thead>
@@ -20,7 +21,8 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
   <p><strong>Total: {{ statement.total_calculated|clp }}</strong></p>
   <p>Estado: <span class="badge badge-{{ 'info' if statement.reconciliation_status == 'PENDIENTE' else 'success' }}">{{ statement.reconciliation_status }}</span></p>
 </div>

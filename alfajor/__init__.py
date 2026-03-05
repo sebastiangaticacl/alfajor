@@ -30,12 +30,15 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     from alfajor.config import config
     env = config_name or "development"
     app.config.from_object(config[env])
+    if env == "production" and app.config.get("SECRET_KEY") == "dev-secret-change-in-production":
+        raise RuntimeError("SECRET_KEY inválido en producción.")
 
     # Extensiones
-    from alfajor.extensions import db, login_manager, migrate
+    from alfajor.extensions import db, login_manager, migrate, csrf
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
 
     # Modelos (para migraciones)
     import alfajor.models  # noqa: F401

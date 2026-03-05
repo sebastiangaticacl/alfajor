@@ -8,6 +8,7 @@ from flask_login import login_required
 from alfajor.utils.decorators import contabilidad_or_admin
 from alfajor.blueprints.reports import bp
 from alfajor.models import PayStatement, PayLine, PerformanceSnapshot
+from sqlalchemy.orm import selectinload
 from alfajor.services.ranking_calculator import build_ranking
 
 
@@ -18,7 +19,9 @@ def payroll_csv():
     period_id = request.args.get("period_id")
     if not period_id:
         return "period_id requerido", 400
-    statements = PayStatement.query.filter_by(pay_period_id=period_id).all()
+    statements = PayStatement.query.options(selectinload(PayStatement.employee)).filter_by(
+        pay_period_id=period_id
+    ).all()
     si = StringIO()
     w = csv.writer(si)
     w.writerow(["Empleado", "Total base (hrs)", "Total calculado (CLP)", "Estado"])

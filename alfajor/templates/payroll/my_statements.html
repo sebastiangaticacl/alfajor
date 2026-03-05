@@ -4,7 +4,8 @@
 {% block content %}
 <h1 class="page-title">Mis liquidaciones</h1>
 <div class="card">
-  <table class="table">
+  <div class="table-responsive">
+    <table class="table">
     <thead>
       <tr><th>Periodo</th><th>Total (CLP)</th><th>Estado</th><th></th></tr>
     </thead>
@@ -20,6 +21,20 @@
       <tr><td colspan="4" class="text-muted">Sin liquidaciones.</td></tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
+
+{% if total and total > per_page %}
+{% set total_pages = (total // per_page) + (1 if total % per_page else 0) %}
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="{{ url_for('payroll.my_statements', page=page-1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Anterior</a>
+  {% endif %}
+  <span class="text-sm text-muted">Página {{ page }} de {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="{{ url_for('payroll.my_statements', page=page+1, per_page=per_page) }}" class="btn btn-secondary btn-sm">Siguiente</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

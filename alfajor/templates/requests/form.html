@@ -5,21 +5,22 @@
 <h1 class="page-title">Nueva solicitud</h1>
 <div class="card">
   <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
-      <label>Tipo</label>
-      <select name="request_type" class="form-input">
+      <label for="request_type">Tipo</label>
+      <select id="request_type" name="request_type" class="form-input">
         <option value="DIA_LIBRE">Día libre</option>
         <option value="CAMBIO_TURNO">Cambio de turno</option>
         <option value="SWAP">Swap</option>
       </select>
     </div>
     <div class="form-group">
-      <label>Fecha solicitada</label>
-      <input type="date" name="requested_date" class="form-input" required>
+      <label for="requested_date">Fecha solicitada</label>
+      <input type="date" id="requested_date" name="requested_date" class="form-input" required>
     </div>
     <div class="form-group">
-      <label>Motivo</label>
-      <textarea name="reason" class="form-input" rows="3"></textarea>
+      <label for="reason">Motivo</label>
+      <textarea id="reason" name="reason" class="form-input" rows="3"></textarea>
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">Enviar</button>
