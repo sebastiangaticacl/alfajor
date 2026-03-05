@@ -147,7 +147,7 @@ def seed():
         for emp in [emp1, emp2]:
             st = PayStatement(
                 pay_period_id=period.id, employee_id=emp.id,
-                total_base_hours=24, total_calculated=emp.hourly_rate * 24,
+                total_base_hours=24, total_calculated=int(emp.hourly_rate) * 24,
                 reconciliation_status="PENDIENTE",
                 generated_at=datetime.utcnow()
             )
@@ -155,8 +155,8 @@ def seed():
             db.session.flush()
             db.session.add(PayLine(
                 pay_statement_id=st.id, line_type="BASE_HOURS",
-                description="Horas base", quantity=24, unit_rate=float(emp.hourly_rate),
-                amount=float(emp.hourly_rate) * 24
+                description="Horas base", quantity=24, unit_rate=int(emp.hourly_rate),
+                amount=int(emp.hourly_rate) * 24
             ))
 
         db.session.commit()

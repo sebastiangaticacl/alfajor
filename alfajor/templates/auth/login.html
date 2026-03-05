@@ -34,26 +34,16 @@
 </div>
 
 <style>
-body.login-page {
-  background: var(--color-brand-cream);
-}
-body.login-page .app-layout {
-  background: var(--color-brand-cream);
-}
+body.login-page { background: var(--color-brand-cream); }
+body.login-page .app-layout { background: var(--color-brand-cream); }
 body.login-page .topbar {
   background: var(--color-brand-white);
   border-bottom-color: var(--color-brand-red);
 }
 body.login-page .topbar .topbar-system-name,
-body.login-page .topbar .topbar-subtitle {
-  color: #3d3d3d;
-}
-body.login-page .topbar .topbar-logo-link:hover .topbar-system-name {
-  color: var(--color-brand-red);
-}
-.login-cosas-ricas {
-  background: transparent;
-}
+body.login-page .topbar .topbar-subtitle { color: #3d3d3d; }
+body.login-page .topbar .topbar-logo-link:hover .topbar-system-name { color: var(--color-brand-red); }
+.login-cosas-ricas { background: transparent; }
 .login-container {
   display: flex;
   align-items: center;
@@ -65,10 +55,7 @@ body.login-page .topbar .topbar-logo-link:hover .topbar-system-name {
   border: 1px solid var(--color-brand-cream-dark, #EDE4D5);
   box-shadow: var(--shadow-lg);
 }
-.login-card {
-  width: 100%;
-  max-width: 400px;
-}
+.login-card { width: 100%; max-width: 400px; }
 .login-header { text-align: center; margin-bottom: var(--space-8); }
 .login-logo-img {
   max-width: 200px;
@@ -83,39 +70,15 @@ body.login-page .topbar .topbar-logo-link:hover .topbar-system-name {
   margin: 0 0 var(--space-2);
   color: #2d2d2d;
 }
-.login-cosas-ricas .login-subtitle {
-  color: #5a5a5a;
-}
-.login-subtitle {
-  font-size: var(--text-sm);
-  margin: 0;
-}
+.login-cosas-ricas .login-subtitle { color: #5a5a5a; }
+.login-subtitle { font-size: var(--text-sm); margin: 0; }
 .login-cosas-ricas .form-group label { color: #3d3d3d; }
-.form-group { margin-bottom: var(--space-4); }
-.form-group label {
-  display: block;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  margin-bottom: var(--space-2);
-}
 .login-cosas-ricas .form-input {
   background: var(--color-brand-cream);
   border-color: var(--color-brand-cream-dark, #EDE4D5);
   color: #1a1a1a;
 }
-.form-input {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-base);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-default);
-}
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-brand-red);
-}
-.form-error { color: var(--color-danger); font-size: var(--text-sm); }
-.form-check { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
-.btn-block { width: 100%; margin-top: var(--space-4); }
+.login-cosas-ricas .form-input:focus { border-color: var(--color-brand-red); }
+.login-form .btn-block { margin-top: var(--space-4); }
 </style>
 {% endblock %}

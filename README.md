@@ -1,103 +1,82 @@
 # ALFAJOR
 
-**Sistema de Turnos del Café Cosas Ricas**
+Sistema de gestión de turnos, pagos y ranking para el Café Cosas Ricas.
 
-Desarrollado por Seba Gatica · 2026
+**Desarrollado por Seba Gatica · 2026**
 
 ---
+
+## Características
+
+- **Turnos**: Calendario semanal, validaciones, estados (borrador/publicada/cerrada)
+- **Pagos**: Periodos, liquidaciones explicables, conciliación, export CSV
+- **Ranking**: Score configurable por presets, snapshots, export CSV
+- **RBAC**: Admin, Encargado, Contabilidad, Trabajador
+- **UI**: Tema oscuro/claro, paleta Cosas Ricas, responsive
 
 ## Requisitos
 
 - Python 3.9+
-- PostgreSQL (opcional, SQLite para desarrollo)
+- PostgreSQL (producción) / SQLite (desarrollo)
 
-## Setup
+## Instalación
 
 ```bash
-# Clonar / entrar al proyecto
-cd CRT
+git clone https://github.com/stvaldiviazal-create/alfajor.git
+cd alfajor
 
-# Entorno virtual
 python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 
-# Dependencias
-pip install -r requirements.txt
+make install
+# o: pip install -r requirements.txt
 
-# Variables de entorno
 cp .env.example .env
-# Editar .env: SECRET_KEY, DATABASE_URL (opcional)
+# Editar .env con SECRET_KEY y DATABASE_URL
 ```
 
 ## Base de datos
 
 ```bash
-# Crear tablas (SQLite por defecto en dev)
-FLASK_APP=alfajor flask db upgrade
-
-# Seed demo (usuarios, empleados, semanas, periodo)
-python scripts/seed.py
+make migrate
+make seed
 ```
 
-## Ejecutar
+## Ejecución
 
+**Desarrollo:**
 ```bash
-FLASK_APP=alfajor flask run
+make run
 ```
 
-O con Gunicorn (producción):
-
+**Producción:**
 ```bash
-gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
-```
-
-## Usuarios demo (después del seed)
-
-| Rol           | Email                      | Contraseña |
-|---------------|----------------------------|------------|
-| Admin         | admin                      | admin      |
-| Encargado     | encargado@cosasricas.local | enc123     |
-| Contabilidad  | contabilidad@cosasricas.local | cont123  |
-| Trabajador    | juan@cosasricas.local      | trab123    |
-
-## Migraciones
-
-```bash
-FLASK_APP=alfajor flask db migrate -m "descripción"
-FLASK_APP=alfajor flask db upgrade
+make run-prod
 ```
 
 ## Variables de entorno
 
-| Variable     | Descripción                    | Default        |
-|--------------|--------------------------------|----------------|
-| FLASK_APP    | Módulo de la app               | alfajor        |
-| FLASK_ENV    | development / production       | development    |
-| SECRET_KEY   | Clave secreta Flask            | (obligatorio)  |
-| DATABASE_URL | PostgreSQL o SQLite            | sqlite:///alfajor.db |
+| Variable     | Descripción              | Default           |
+|--------------|--------------------------|-------------------|
+| FLASK_APP    | Módulo de la aplicación  | alfajor           |
+| FLASK_ENV    | Entorno                  | development       |
+| SECRET_KEY   | Clave secreta Flask      | (requerido)       |
+| DATABASE_URL | Conexión a base de datos | sqlite:///alfajor.db |
 
-## Estructura
+## Estructura del proyecto
 
-- `alfajor/` - Aplicación Flask
-- `alfajor/models/` - Modelos SQLAlchemy
-- `alfajor/blueprints/` - Rutas por módulo
-- `alfajor/services/` - Lógica de negocio
-- `alfajor/templates/` - Jinja2
-- `alfajor/static/` - CSS, JS
-- `migrations/` - Alembic
-- `scripts/` - Seed, utilidades
+```
+alfajor/
+├── alfajor/           # Aplicación Flask
+│   ├── blueprints/    # Módulos (auth, admin, shifts, payroll...)
+│   ├── models/        # SQLAlchemy
+│   ├── services/      # Lógica de negocio
+│   └── templates/
+├── migrations/        # Alembic
+├── scripts/           # Seed, utilidades
+└── docs/              # Documentación
+```
 
-## Módulos
+## Licencia
 
-- **Auth**: Login, usuarios (ADMIN)
-- **Dashboard**: Resumen, alertas
-- **Turnos**: Calendario, semanas, validaciones
-- **Personas**: Empleados, disponibilidad
-- **Solicitudes**: Cambios, aprobaciones
-- **Pagos**: Periodos, liquidaciones, conciliación, CSV
-- **Ranking**: Score, presets, CSV
-- **Config**: Horarios, reglas, sucursales
-
----
-
-Ver `docs/PLAN_PRIMER_PASO.md` para el plan completo.
+Proyecto privado · Café Cosas Ricas

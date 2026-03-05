@@ -1,7 +1,6 @@
 """Cálculo de liquidaciones."""
 
 from datetime import datetime
-from decimal import Decimal
 from alfajor.extensions import db
 from alfajor.models import Shift, PayStatement, PayLine, Employee, PayPeriod
 from alfajor.enums import ShiftStatus, PayLineType, ReconciliationStatus
@@ -42,13 +41,13 @@ def _calculate_statement(period_id, employee_id):
         Shift.date <= period.end_date,
         Shift.status == ShiftStatus.COMPLETADO.value
     ).all()
-    total_base = Decimal("0")
+    total_base = 0
     lines_data = []
     for s in shifts:
         hours = (s.end_time.hour * 60 + s.end_time.minute - s.start_time.hour * 60 - s.start_time.minute) / 60
-        amount = Decimal(str(hours)) * employee.hourly_rate
+        amount = int(round(hours * float(employee.hourly_rate), 0))
         total_base += amount
-        lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", hours, float(employee.hourly_rate), amount))
+        lines_data.append((PayLineType.BASE_HOURS.value, f"Turno {s.date}", int(round(hours, 0)), int(employee.hourly_rate), amount))
     st = PayStatement(
         pay_period_id=period_id,
         employee_id=employee_id,
@@ -57,7 +56,7 @@ def _calculate_statement(period_id, employee_id):
         total_surcharges=0,
         total_bonuses=0,
         total_deductions=0,
-        total_calculated=total_base,
+        total_calculated=int(total_base),
         reconciliation_status=ReconciliationStatus.PENDIENTE.value,
         generated_at=datetime.utcnow(),
     )

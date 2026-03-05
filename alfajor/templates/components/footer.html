@@ -1,5 +1,9 @@
 <footer class="app-footer" role="contentinfo">
-  Desarrollado por Seba Gatica · 2026
+  <span class="footer-credit">Desarrollado por Seba Gatica · 2026</span>
+  <div class="footer-theme">
+    <button type="button" class="theme-btn theme-dark" data-theme="dark" title="Tema oscuro" aria-label="Tema oscuro">🌙</button>
+    <button type="button" class="theme-btn theme-light" data-theme="light" title="Tema claro" aria-label="Tema claro">☀️</button>
+  </div>
 </footer>
 
 <style>
@@ -11,10 +15,51 @@
   height: var(--footer-height);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   background: var(--color-bg-secondary);
   border-top: 2px solid var(--color-brand-red);
 }
+.footer-credit { flex: 1; text-align: center; }
+.footer-theme {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+.theme-btn {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.theme-btn:hover { opacity: 1; }
+.theme-btn.active {
+  opacity: 1;
+  border-color: var(--color-brand-red);
+  background: var(--color-accent-muted);
+}
 </style>
+
+<script>
+(function() {
+  var stored = localStorage.getItem('alfajor-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', stored);
+  document.querySelectorAll('.theme-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.theme === stored);
+    btn.addEventListener('click', function() {
+      var theme = this.dataset.theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('alfajor-theme', theme);
+      document.querySelectorAll('.theme-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.theme === theme);
+      });
+    });
+  });
+})();
+</script>

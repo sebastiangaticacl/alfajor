@@ -8,20 +8,20 @@
 <div class="card">
   <table class="table">
     <thead>
-      <tr><th>Concepto</th><th>Cantidad</th><th>Tarifa</th><th>Monto</th></tr>
+      <tr><th>Concepto</th><th>Cantidad</th><th>Tarifa (CLP)</th><th>Monto (CLP)</th></tr>
     </thead>
     <tbody>
       {% for line in statement.lines %}
       <tr>
         <td>{{ line.description }}</td>
         <td>{{ line.quantity }}</td>
-        <td>${{ "%.2f"|format(line.unit_rate or 0) }}</td>
-        <td>${{ "%.2f"|format(line.amount) }}</td>
+        <td>{{ (line.unit_rate or 0)|clp }}</td>
+        <td>{{ line.amount|clp }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  <p><strong>Total: ${{ "%.2f"|format(statement.total_calculated) }}</strong></p>
+  <p><strong>Total: {{ statement.total_calculated|clp }}</strong></p>
   <p>Estado: <span class="badge badge-{{ 'info' if statement.reconciliation_status == 'PENDIENTE' else 'success' }}">{{ statement.reconciliation_status }}</span></p>
 </div>
 {% endblock %}

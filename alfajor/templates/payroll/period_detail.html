@@ -18,7 +18,7 @@
     <thead>
       <tr>
         <th>Empleado</th>
-        <th>Total calculado</th>
+        <th>Total (CLP)</th>
         <th>Estado conciliación</th>
         <th></th>
       </tr>
@@ -27,7 +27,7 @@
       {% for st in statements %}
       <tr>
         <td>{{ st.employee.full_name }}</td>
-        <td>${{ "%.2f"|format(st.total_calculated) }}</td>
+        <td>{{ st.total_calculated|clp }}</td>
         <td><span class="badge badge-{{ 'info' if st.reconciliation_status == 'PENDIENTE' else 'success' if st.reconciliation_status == 'PAGADO' else 'warning' }}">{{ st.reconciliation_status }}</span></td>
         <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
       </tr>

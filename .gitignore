@@ -25,6 +25,7 @@ instance/
 # DB
 *.db
 *.sqlite3
+alfajor.db
 
 # Migrations (opcional: descomentar si no versionas)
 # migrations/versions/*.py

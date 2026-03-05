@@ -1,7 +1,7 @@
-# ALFAJOR - Sistema de Turnos del Café Cosas Ricas
-# Python 3.11+
+# ALFAJOR - Dependencias
+# Python 3.9+
 
-Flask>=3.0.0
+Flask>=3.0.0,<4.0
 Flask-SQLAlchemy>=3.1.0
 Flask-Login>=0.6.3
 Flask-Migrate>=4.0.5

@@ -3,24 +3,26 @@
 
 {% block content %}
 <h1 class="page-title">Configuración</h1>
-<p class="text-secondary">Horarios, reglas, roles, sucursales.</p>
+<p class="page-subtitle">Horarios, reglas, roles, sucursales.</p>
 
 <div class="config-grid">
   <div class="card">
     <div class="card-header">Configuración JSON</div>
-    <table class="table">
+    <div class="config-settings">
       {% for key, s in settings.items() %}
-      <tr>
-        <td><code>{{ key }}</code></td>
-        <td>
-          <form action="{{ url_for('settings.update_setting', key=key) }}" method="post" class="inline-form">
-            <input type="text" name="value" value="{{ s.value|json_dumps }}" class="form-input form-input-sm">
-            <button type="submit" class="btn btn-secondary btn-sm">Guardar</button>
-          </form>
-        </td>
-      </tr>
+      <div class="config-setting">
+        <label class="config-setting-key"><code>{{ key }}</code></label>
+        <form action="{{ url_for('settings.update_setting', key=key) }}" method="post" class="config-setting-form">
+          {% if s.value|setting_is_json %}
+          <textarea name="value" class="form-input form-textarea config-json-input" rows="6">{{ s.value|json_dumps_pretty }}</textarea>
+          {% else %}
+          <input type="text" name="value" value="{{ s.value|json_dumps }}" class="form-input config-simple-input">
+          {% endif %}
+          <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+        </form>
+      </div>
       {% endfor %}
-    </table>
+    </div>
     {% if not settings %}
     <p class="text-muted">Sin configuración. Ejecuta el seed.</p>
     {% endif %}
@@ -28,7 +30,7 @@
 
   <div class="card">
     <div class="card-header">Sucursales</div>
-    <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary btn-sm" style="margin-bottom: var(--space-2);">Nueva sucursal</a>
+    <a href="{{ url_for('settings.branch_new') }}" class="btn btn-primary config-new-branch">Nueva sucursal</a>
     <table class="table">
       <thead>
         <tr><th>Nombre</th><th>Código</th><th></th></tr>
@@ -45,11 +47,4 @@
     </table>
   </div>
 </div>
-
-<style>
-.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
-@media (max-width: 768px) { .config-grid { grid-template-columns: 1fr; } }
-.inline-form { display: flex; gap: var(--space-2); align-items: center; }
-.form-input-sm { max-width: 200px; }
-</style>
 {% endblock %}

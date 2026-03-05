@@ -5,39 +5,46 @@
 <h1 class="page-title">Dashboard</h1>
 
 <div class="dashboard-cards">
-  <div class="card">
+  <div class="card dashboard-card">
     <div class="card-header">Turnos de hoy</div>
     <p class="card-value">{{ total_today }} total / {{ covered_today }} cubiertos</p>
-    <p class="text-muted text-sm">{{ total_today - covered_today }} pendientes</p>
+    <p class="card-sub text-muted">{{ total_today - covered_today }} pendientes</p>
+    <div class="card-actions">
+      <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary btn-sm">Ver calendario</a>
+    </div>
   </div>
-  <div class="card">
+  <div class="card dashboard-card">
     <div class="card-header">Semanas</div>
     <p class="card-value">{{ draft_weeks }} borradores · {{ published_weeks }} publicadas · {{ closed_weeks }} cerradas</p>
+    <p class="card-sub text-muted">Total: {{ draft_weeks + published_weeks + closed_weeks }} semanas</p>
+    <div class="card-actions">
+      <a href="{{ url_for('shifts.calendar') }}" class="btn btn-secondary btn-sm">Gestionar</a>
+    </div>
   </div>
-  <div class="card">
+  <div class="card dashboard-card">
     <div class="card-header">Pagos</div>
     <p class="card-value">{{ periods|length }} periodos abiertos</p>
-    <a href="{{ url_for('payroll.periods') }}" class="btn btn-secondary btn-sm" style="margin-top: var(--space-2);">Ver pagos</a>
+    <p class="card-sub text-muted">En curso o en revisión</p>
+    <div class="card-actions">
+      <a href="{{ url_for('payroll.periods') }}" class="btn btn-secondary btn-sm">Ver pagos</a>
+    </div>
   </div>
-  <div class="card">
+  <div class="card dashboard-card">
     <div class="card-header">Solicitudes pendientes</div>
     <p class="card-value">{{ pending_requests }}</p>
-    {% if pending_requests > 0 %}
-    <a href="{{ url_for('requests.list') }}" class="btn btn-primary btn-sm" style="margin-top: var(--space-2);">Revisar</a>
-    {% endif %}
+    <p class="card-sub text-muted">Requieren revisión</p>
+    <div class="card-actions">
+      {% if pending_requests > 0 %}
+      <a href="{{ url_for('requests.list') }}" class="btn btn-primary btn-sm">Revisar</a>
+      {% else %}
+      <a href="{{ url_for('requests.list') }}" class="btn btn-secondary btn-sm">Ver todas</a>
+      {% endif %}
+    </div>
   </div>
 </div>
 
-<div class="dashboard-actions" style="margin-top: var(--space-8);">
+<div class="dashboard-actions">
   <a href="{{ url_for('shifts.calendar') }}" class="btn btn-primary">Ir a turnos</a>
   <a href="{{ url_for('payroll.period_new') }}" class="btn btn-secondary">Nuevo periodo de pago</a>
 </div>
-
-<style>
-.page-title { font-size: var(--text-2xl); font-weight: var(--font-bold); margin: 0 0 var(--space-2); }
-.dashboard-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6); margin-top: var(--space-4); }
-.card-value { font-size: var(--text-xl); font-weight: var(--font-semibold); margin: 0 0 var(--space-2); }
-.text-sm { font-size: var(--text-sm); }
-.dashboard-actions { display: flex; gap: var(--space-2); }
-</style>
 {% endblock %}

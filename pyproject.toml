@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alfajor"
+version = "1.0.0"
+description = "Sistema de turnos, pagos y ranking - Café Cosas Ricas"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Proprietary"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alfajor"]

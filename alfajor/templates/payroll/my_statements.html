@@ -6,13 +6,13 @@
 <div class="card">
   <table class="table">
     <thead>
-      <tr><th>Periodo</th><th>Total</th><th>Estado</th><th></th></tr>
+      <tr><th>Periodo</th><th>Total (CLP)</th><th>Estado</th><th></th></tr>
     </thead>
     <tbody>
       {% for st in statements %}
       <tr>
         <td>{{ st.pay_period.name }}</td>
-        <td>${{ "%.2f"|format(st.total_calculated) }}</td>
+        <td>{{ st.total_calculated|clp }}</td>
         <td><span class="badge badge-{{ 'info' if st.reconciliation_status == 'PENDIENTE' else 'success' }}">{{ st.reconciliation_status }}</span></td>
         <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
       </tr>

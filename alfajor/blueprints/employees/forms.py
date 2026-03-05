@@ -1,7 +1,7 @@
 """Formularios empleados."""
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SelectField, BooleanField, TextAreaField
+from wtforms import StringField, IntegerField, SelectField, BooleanField, TextAreaField
 from wtforms.validators import DataRequired, Optional, NumberRange
 
 
@@ -17,7 +17,7 @@ class EmployeeForm(FlaskForm):
         ("cocina", "Cocina"),
         ("runner", "Runner"),
     ], validators=[Optional()])
-    hourly_rate = FloatField("Valor hora", validators=[DataRequired(), NumberRange(min=0)])
+    hourly_rate = IntegerField("Valor hora", validators=[DataRequired(), NumberRange(min=0)])
     status = SelectField("Estado", choices=[
         ("ACTIVO", "Activo"),
         ("INACTIVO", "Inactivo"),

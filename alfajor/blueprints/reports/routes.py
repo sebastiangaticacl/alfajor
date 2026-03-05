@@ -21,12 +21,12 @@ def payroll_csv():
     statements = PayStatement.query.filter_by(pay_period_id=period_id).all()
     si = StringIO()
     w = csv.writer(si)
-    w.writerow(["Empleado", "Total base", "Total calculado", "Estado"])
+    w.writerow(["Empleado", "Total base (hrs)", "Total calculado (CLP)", "Estado"])
     for st in statements:
         w.writerow([
             st.employee.full_name,
-            float(st.total_base_hours),
-            float(st.total_calculated),
+            int(st.total_base_hours),
+            int(st.total_calculated),
             st.reconciliation_status,
         ])
     output = si.getvalue()

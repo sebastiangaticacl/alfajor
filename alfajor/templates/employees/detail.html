@@ -7,7 +7,7 @@
   <p><strong>Email:</strong> {{ employee.email or '—' }}</p>
   <p><strong>Teléfono:</strong> {{ employee.phone or '—' }}</p>
   <p><strong>Rol base:</strong> {{ employee.base_role or '—' }}</p>
-  <p><strong>Valor hora:</strong> ${{ "%.2f"|format(employee.hourly_rate) }}</p>
+  <p><strong>Valor hora:</strong> {{ employee.hourly_rate|clp }}</p>
   <p><strong>Estado:</strong> <span class="badge badge-{{ 'success' if employee.status == 'ACTIVO' else 'warning' }}">{{ employee.status }}</span></p>
   <p><strong>Sucursal:</strong> {{ employee.branch.name if employee.branch else '—' }}</p>
   {% if current_user.role in ['ADMIN', 'ENCARGADO'] %}

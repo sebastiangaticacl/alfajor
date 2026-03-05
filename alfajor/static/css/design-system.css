@@ -88,6 +88,26 @@
   --footer-height: 40px;
 }
 
+/* Tema claro */
+html[data-theme="light"] {
+  --color-bg-primary: #F8F0E3;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F0E8DC;
+  --color-bg-elevated: #EDE4D5;
+  --color-bg-hover: #E0D6C8;
+
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-muted: #6e6e6e;
+
+  --color-border-default: #EDE4D5;
+  --color-border-muted: #E0D6C8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+}
+
 /* Reset base */
 *, *::before, *::after {
   box-sizing: border-box;

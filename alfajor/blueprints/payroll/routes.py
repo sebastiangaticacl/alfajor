@@ -104,7 +104,7 @@ def transaction_new():
             flash("Datos incompletos.", "danger")
             return redirect(url_for("payroll.periods"))
         try:
-            amt = float(amount)
+            amt = int(amount)
             pay_d = date.fromisoformat(payment_date)
         except (ValueError, TypeError):
             flash("Datos inválidos.", "danger")
@@ -132,11 +132,11 @@ def transaction_new():
         st = PayStatement.query.filter_by(pay_period_id=period_id, employee_id=emp_id).first()
         if st:
             total_paid = sum(
-                float(t.amount) for t in PaymentTransaction.query.filter_by(
+                int(t.amount) for t in PaymentTransaction.query.filter_by(
                     pay_period_id=period_id, employee_id=emp_id
                 ).all()
             ) + amt
-            calc = float(st.total_calculated)
+            calc = int(st.total_calculated)
             if total_paid >= calc:
                 st.reconciliation_status = ReconciliationStatus.PAGADO.value
             elif total_paid > 0:

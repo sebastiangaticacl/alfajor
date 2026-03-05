@@ -23,16 +23,19 @@ def index():
 @admin_required
 def update_setting(key):
     import json
-    val = request.form.get("value")
+    val = request.form.get("value", "").strip()
     try:
         if val.startswith("{") or val.startswith("["):
             value = json.loads(val)
         elif val.isdigit():
             value = int(val)
-        elif val.replace(".", "").isdigit():
+        elif val.replace(".", "", 1).replace("-", "", 1).isdigit():
             value = float(val)
         else:
             value = val
+    except json.JSONDecodeError as e:
+        flash(f"JSON inválido en {key}: {e}", "danger")
+        return redirect(url_for("settings.index"))
     except Exception:
         value = val
     set_setting(key, value)

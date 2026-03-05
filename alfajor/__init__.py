@@ -1,5 +1,7 @@
 """
 ALFAJOR - Sistema de Turnos del Café Cosas Ricas
+
+Aplicación Flask para gestión de turnos, pagos y ranking.
 Desarrollado por Seba Gatica · 2026
 """
 
@@ -8,7 +10,16 @@ from typing import Optional
 
 
 def create_app(config_name: Optional[str] = None) -> Flask:
-    """Factory de aplicación Flask."""
+    """
+    Factory de aplicación Flask.
+
+    Args:
+        config_name: Entorno (development, production, testing).
+                     Si None, usa FLASK_ENV o "development".
+
+    Returns:
+        Instancia configurada de Flask.
+    """
     app = Flask(
         __name__,
         template_folder="templates",
@@ -59,7 +70,7 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     app.register_blueprint(settings_bp)
     app.register_blueprint(reports_bp)
 
-    # Filtro template para JSON
+    # Filtros template para JSON
     import json
     @app.template_filter("json_dumps")
     def json_dumps_filter(val):
@@ -68,6 +79,36 @@ def create_app(config_name: Optional[str] = None) -> Flask:
         if isinstance(val, str):
             return val
         return json.dumps(val, ensure_ascii=False)
+
+    @app.template_filter("json_dumps_pretty")
+    def json_dumps_pretty_filter(val):
+        if val is None:
+            return ""
+        if isinstance(val, str):
+            return val
+        return json.dumps(val, ensure_ascii=False, indent=2)
+
+    @app.template_filter("setting_is_json")
+    def setting_is_json_filter(val):
+        """True si el valor es dict o list (requiere textarea)."""
+        return isinstance(val, (dict, list))
+
+    @app.template_filter("clp")
+    def clp_filter(val):
+        """Formatea número como peso chileno (CLP). Ej: 1000 -> $1.000 CLP"""
+        if val is None:
+            return "$0 CLP"
+        n = int(round(float(val), 0))
+        s = str(abs(n))
+        # Separador de miles: punto (convención chilena)
+        parts = []
+        for i, c in enumerate(reversed(s)):
+            if i > 0 and i % 3 == 0:
+                parts.append(".")
+            parts.append(c)
+        formatted = "".join(reversed(parts))
+        prefix = f"${formatted}" if n >= 0 else f"-${formatted}"
+        return f"{prefix} CLP"
 
     # Ruta raíz → dashboard o login
     @app.route("/")

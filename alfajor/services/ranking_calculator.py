@@ -1,6 +1,5 @@
 """Cálculo de score de ranking."""
 
-from decimal import Decimal
 from alfajor.models import Shift, AttendanceEvent, Employee, PerformanceSnapshot, PayPeriod
 from alfajor.enums import ShiftStatus, ScorePreset
 from alfajor.services.settings_service import get_setting
@@ -42,7 +41,7 @@ def calculate_score(employee_id, period_start, period_end, preset="BALANCEADO"):
     score += shifts_completed * w.get("w_completed", 2)
     score = max(0, min(100, score))
     return {
-        "score": round(score, 2),
+        "score": round(score, 0),
         "shifts_completed": shifts_completed,
         "late_minutes": late_minutes,
         "absences": absences,
@@ -75,7 +74,7 @@ def build_ranking(period_start, period_end, branch_id=None, shift_role=None, pre
         results.append({
             "employee": emp,
             "score": data["score"],
-            "total_hours": round(total_hours, 2),
+            "total_hours": round(total_hours, 0),
             **data,
         })
     results.sort(key=lambda x: x["score"], reverse=True)

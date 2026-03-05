@@ -19,17 +19,18 @@ def dashboard():
     shifts_today = Shift.query.filter(Shift.date == today, Shift.status != "ANULADO").all()
     total_today = len(shifts_today)
     covered_today = sum(1 for s in shifts_today if s.status == "COMPLETADO")
-    weeks = ScheduleWeek.query.order_by(ScheduleWeek.start_date.desc()).limit(5).all()
-    draft_weeks = sum(1 for w in weeks if w.status == "BORRADOR")
-    published_weeks = sum(1 for w in weeks if w.status == "PUBLICADA")
-    closed_weeks = sum(1 for w in weeks if w.status == "CERRADA")
+    all_weeks = ScheduleWeek.query.all()
+    draft_weeks = sum(1 for w in all_weeks if w.status == "BORRADOR")
+    published_weeks = sum(1 for w in all_weeks if w.status == "PUBLICADA")
+    closed_weeks = sum(1 for w in all_weeks if w.status == "CERRADA")
     periods = PayPeriod.query.filter(PayPeriod.status.in_(["ABIERTO", "EN_REVISION"])).all()
     pending_requests = ShiftRequest.query.filter_by(status="PENDIENTE").count()
+    recent_weeks = ScheduleWeek.query.order_by(ScheduleWeek.start_date.desc()).limit(5).all()
     return render_template(
         "admin/dashboard.html",
         total_today=total_today,
         covered_today=covered_today,
-        weeks=weeks,
+        recent_weeks=recent_weeks,
         draft_weeks=draft_weeks,
         published_weeks=published_weeks,
         closed_weeks=closed_weeks,

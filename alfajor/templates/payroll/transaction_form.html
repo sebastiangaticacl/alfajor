@@ -24,8 +24,8 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Monto</label>
-      <input type="number" name="amount" step="0.01" class="form-input" required>
+      <label>Monto (CLP)</label>
+      <input type="number" name="amount" step="1" min="0" class="form-input" placeholder="Pesos chilenos" required>
     </div>
     <div class="form-group">
       <label>Método</label>
@@ -49,5 +49,4 @@
     </div>
   </form>
 </div>
-<style>.form-group { margin-bottom: var(--space-4); } .form-actions { margin-top: var(--space-4); display: flex; gap: var(--space-2); }</style>
 {% endblock %}
