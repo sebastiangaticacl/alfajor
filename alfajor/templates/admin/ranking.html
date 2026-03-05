@@ -48,7 +48,7 @@
         <td>{{ loop.index }}</td>
         <td><a href="{{ url_for('employees.detail', id=r.employee.id) }}">{{ r.employee.full_name }}</a></td>
         <td><strong>{{ "%.0f"|format(r.score) }}</strong></td>
-        <td>{{ "%.0f"|format(r.total_hours) }}</td>
+        <td>{{ "%.2f"|format(r.total_hours) }}</td>
         <td>{{ r.shifts_completed }}</td>
         <td>{{ r.late_minutes }}</td>
         <td>{{ r.absences }}</td>
