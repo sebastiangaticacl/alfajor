@@ -143,6 +143,19 @@
 .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
 .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
+.score-bar {
+  height: 6px;
+  background: var(--bg-surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.score-fill {
+  height: 100%;
+  background: var(--primary);
+}
+
 .sidebar-toggle {
   display: none;
   background: transparent;

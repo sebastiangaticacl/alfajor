@@ -5,24 +5,26 @@
 <h1 class="page-title">Ranking</h1>
 <p class="page-subtitle">Rendimiento por periodo.</p>
 
-<form method="get" class="filter-form">
-  <div class="form-group">
-    <label for="start">Desde</label>
-    <input type="date" id="start" name="start" class="form-input" value="{{ period_start.isoformat() }}">
+<form method="get" class="filter-bar">
+  <div class="filter-left">
+    <div class="stack">
+      <label for="start" class="text-xs">Desde</label>
+      <input type="date" id="start" name="start" class="input" value="{{ period_start.isoformat() }}">
+    </div>
+    <div class="stack">
+      <label for="end" class="text-xs">Hasta</label>
+      <input type="date" id="end" name="end" class="input" value="{{ period_end.isoformat() }}">
+    </div>
+    <div class="stack">
+      <label for="preset" class="text-xs">Preset</label>
+      <select id="preset" name="preset" class="select">
+        <option value="BALANCEADO" {{ 'selected' if preset == 'BALANCEADO' else '' }}>Balanceado</option>
+        <option value="PUNTUALIDAD" {{ 'selected' if preset == 'PUNTUALIDAD' else '' }}>Puntualidad</option>
+        <option value="ESTABILIDAD" {{ 'selected' if preset == 'ESTABILIDAD' else '' }}>Estabilidad</option>
+      </select>
+    </div>
   </div>
-  <div class="form-group">
-    <label for="end">Hasta</label>
-    <input type="date" id="end" name="end" class="form-input" value="{{ period_end.isoformat() }}">
-  </div>
-  <div class="form-group">
-    <label for="preset">Preset</label>
-    <select id="preset" name="preset" class="form-input">
-      <option value="BALANCEADO" {{ 'selected' if preset == 'BALANCEADO' else '' }}>Balanceado</option>
-      <option value="PUNTUALIDAD" {{ 'selected' if preset == 'PUNTUALIDAD' else '' }}>Puntualidad</option>
-      <option value="ESTABILIDAD" {{ 'selected' if preset == 'ESTABILIDAD' else '' }}>Estabilidad</option>
-    </select>
-  </div>
-  <div class="form-actions">
+  <div class="filter-right">
     <button type="submit" class="btn btn-primary">Filtrar</button>
     <a href="{{ url_for('reports.ranking_csv', start=period_start.isoformat(), end=period_end.isoformat(), preset=preset) }}" class="btn btn-secondary">Exportar CSV</a>
   </div>
@@ -31,32 +33,39 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Nombre</th>
-        <th>Score</th>
-        <th>Horas</th>
-        <th>Turnos</th>
-        <th>Atrasos (min)</th>
-        <th>Ausencias</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in results %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td><a href="{{ url_for('employees.detail', id=r.employee.id) }}">{{ r.employee.full_name }}</a></td>
-        <td><strong>{{ "%.0f"|format(r.score) }}</strong></td>
-        <td>{{ "%.2f"|format(r.total_hours) }}</td>
-        <td>{{ r.shifts_completed }}</td>
-        <td>{{ r.late_minutes }}</td>
-        <td>{{ r.absences }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="7" class="text-muted">Sin datos.</td></tr>
-      {% endfor %}
-    </tbody>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Empleado</th>
+          <th>Score</th>
+          <th>Horas</th>
+          <th>Turnos</th>
+          <th>Atrasos</th>
+          <th>Ausencias</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td>
+            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+          </td>
+          <td><a href="{{ url_for('employees.detail', id=r.employee.id) }}">{{ r.employee.full_name }}</a></td>
+          <td>
+            <div class="score-bar">
+              <div class="score-fill" style="width: {{ r.score }}%"></div>
+            </div>
+            <span class="text-xs text-secondary">{{ "%.0f"|format(r.score) }}</span>
+          </td>
+          <td>{{ "%.2f"|format(r.total_hours) }}</td>
+          <td>{{ r.shifts_completed }}</td>
+          <td>{{ r.late_minutes }}</td>
+          <td>{{ r.absences }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-secondary">Sin datos.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
 </div>

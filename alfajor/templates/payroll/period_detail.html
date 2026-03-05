@@ -17,26 +17,32 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table">
-    <thead>
-      <tr>
-        <th>Empleado</th>
-        <th>Total (CLP)</th>
-        <th>Estado conciliación</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for st in statements %}
-      <tr>
-        <td>{{ st.employee.full_name }}</td>
-        <td>{{ st.total_calculated|clp }}</td>
-        <td><span class="badge badge-{{ 'info' if st.reconciliation_status == 'PENDIENTE' else 'success' if st.reconciliation_status == 'PAGADO' else 'warning' }}">{{ st.reconciliation_status }}</span></td>
-        <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4" class="text-muted">Sin liquidaciones. Generar primero.</td></tr>
-      {% endfor %}
-    </tbody>
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Calculado</th>
+          <th>Pagado</th>
+          <th>Diferencia</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for st in statements %}
+        {% set paid = paid_map.get(st.employee_id, 0) %}
+        {% set diff = st.total_calculated - paid %}
+        <tr>
+          <td>{{ st.employee.full_name }}</td>
+          <td>{{ st.total_calculated|clp }}</td>
+          <td>{{ paid|clp }}</td>
+          <td>{{ diff|clp }}</td>
+          <td><span class="badge badge-{{ 'success' if st.reconciliation_status == 'PAGADO' else 'warning' if st.reconciliation_status == 'PARCIAL' else 'info' }}">{{ st.reconciliation_status }}</span></td>
+          <td><a href="{{ url_for('payroll.statement_detail', id=st.id) }}" class="btn btn-secondary btn-sm">Detalle</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-secondary">Sin liquidaciones. Generar primero.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
 </div>

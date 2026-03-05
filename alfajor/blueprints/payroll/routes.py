@@ -91,6 +91,10 @@ def period_detail(id):
     )
     total = query.count()
     statements = query.limit(per_page).offset((page - 1) * per_page).all()
+    transactions = PaymentTransaction.query.filter_by(pay_period_id=period.id).all()
+    paid_map = {}
+    for t in transactions:
+        paid_map[t.employee_id] = paid_map.get(t.employee_id, 0) + t.amount
     return render_template(
         "payroll/period_detail.html",
         period=period,
@@ -98,6 +102,7 @@ def period_detail(id):
         page=page,
         per_page=per_page,
         total=total,
+        paid_map=paid_map,
     )
 
 

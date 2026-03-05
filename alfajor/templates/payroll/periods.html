@@ -11,26 +11,26 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Rango</th>
-        <th>Estado</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in periods %}
-      <tr>
-        <td>{{ p.name }}</td>
-        <td>{{ p.start_date.strftime('%d/%m') }} – {{ p.end_date.strftime('%d/%m/%Y') }}</td>
-        <td><span class="badge badge-{{ 'info' if p.status == 'ABIERTO' else 'success' if p.status == 'PAGADO' else 'warning' }}">{{ p.status }}</span></td>
-        <td><a href="{{ url_for('payroll.period_detail', id=p.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4" class="text-muted">Sin periodos.</td></tr>
-      {% endfor %}
-    </tbody>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Rango</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in periods %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.start_date.strftime('%d/%m') }} – {{ p.end_date.strftime('%d/%m/%Y') }}</td>
+          <td><span class="badge badge-{{ 'info' if p.status == 'ABIERTO' else 'success' if p.status == 'PAGADO' else 'warning' }}">{{ p.status }}</span></td>
+          <td><a href="{{ url_for('payroll.period_detail', id=p.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-secondary">Sin periodos.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
 </div>
